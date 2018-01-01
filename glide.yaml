@@ -1,0 +1,13 @@
+package: github.com/kinfoundation/stellar-benchmark
+import:
+- package: github.com/stellar/go
+  subpackages:
+  - build
+  - clients/horizon
+  - keypair
+- package: github.com/agl/ed25519
+- package: github.com/go-kit/kit
+  version: 0.6.0
+  subpackages:
+  - log
+  - log/level
