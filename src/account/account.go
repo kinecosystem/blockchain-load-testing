@@ -37,7 +37,7 @@ func Create(funder *keypair.Full, accountsNum int, fundAmount string, logger log
 
 		kp, err := keypair.Random()
 		if err != nil {
-			level.Error(logger).Log("msg", err, "accounts_num_index", i, "seed", kp.Seed())
+			level.Error(logger).Log("msg", err, "account_index", i, "seed", kp.Seed())
 			return nil, err
 		}
 		keypairs[i] = kp
@@ -61,7 +61,7 @@ func Create(funder *keypair.Full, accountsNum int, fundAmount string, logger log
 	for i, kp := range keypairs {
 		level.Info(logger).Log(
 			"msg", "new account created",
-			"accounts_num_index", i,
+			"account_index", i,
 			"address", kp.Address()[:5],
 			"seed", kp.(*keypair.Full).Seed())
 	}
