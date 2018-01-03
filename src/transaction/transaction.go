@@ -14,20 +14,11 @@ import (
 )
 
 const (
-	funderSeed = "SB46AOUVB73DOLQVJWBW676HCA6IA4WISBUGLMXSNRW4P3JOLM3MO2RV"
-
-	accountsNum = 100
-
-	fundAmount     = "30"
-	transferAmount = "0.01"
-
-	createAccountTimeout = 10 * time.Second
-	transferTimeout      = createAccountTimeout
-
-	retryFailedTxAmount = 3
+	submitTimeout       = 10 * time.Second
+	retryFailedTxAmount = 10
 )
 
-func Transfer(from, to keypair.KP, amount string, logger log.Logger) error {
+func Transfer(horizonAddr string, from, to keypair.KP, amount string, logger log.Logger) error {
 	txBuilder := build.Transaction(
 		build.SourceAccount{AddressOrSeed: from.Address()},
 		build.TestNetwork,
@@ -45,9 +36,7 @@ func Transfer(from, to keypair.KP, amount string, logger log.Logger) error {
 		"to", to.Address()[:5],
 		"amount", amount)
 
-	level.Info(l).Log("msg", "submitting transaction")
-
-	err := SubmitWithRetry(txBuilder, from.(*keypair.Full).Seed(), l)
+	err := SubmitWithRetry(horizonAddr, txBuilder, from.(*keypair.Full).Seed(), l)
 	if err != nil {
 		errors.GetTxErrorResultCodes(err, logger)
 		return err
@@ -55,10 +44,10 @@ func Transfer(from, to keypair.KP, amount string, logger log.Logger) error {
 	return nil
 }
 
-func SubmitWithRetry(txBuilder *build.TransactionBuilder, seed string, logger log.Logger) error {
+func SubmitWithRetry(horizonAddr string, txBuilder *build.TransactionBuilder, seed string, logger log.Logger) error {
 	client := horizon.Client{
-		URL:  "https://horizon-testnet.stellar.org",
-		HTTP: &http.Client{Timeout: transferTimeout},
+		URL:  horizonAddr,
+		HTTP: &http.Client{Timeout: submitTimeout},
 	}
 
 	txEnv := txBuilder.Sign(seed)
@@ -69,10 +58,14 @@ func SubmitWithRetry(txBuilder *build.TransactionBuilder, seed string, logger lo
 	}
 
 	for i := 0; i < retryFailedTxAmount; i++ {
+		level.Info(logger).Log("retry_index", i, "msg", "submitting transaction")
+
 		_, err = client.SubmitTransaction(txEnvB64)
 		if err == nil {
-			break
+			return nil
 		}
+
+		errors.GetTxErrorResultCodes(err, logger)
 	}
 
 	return err

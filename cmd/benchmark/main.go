@@ -1,9 +1,9 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
@@ -15,17 +15,16 @@ import (
 )
 
 const (
-	funderSeed = "SB46AOUVB73DOLQVJWBW676HCA6IA4WISBUGLMXSNRW4P3JOLM3MO2RV"
+	funderSeed = "SCY4OBPZQCCSJLC22VD47JXCLJKXQKM5VR56RY2CPY4TPCOK37G57QJA"
 
 	accountsNum = 100
 
 	fundAmount     = "30"
 	transferAmount = "0.01"
+)
 
-	createAccountTimeout = 10 * time.Second
-	transferTimeout      = createAccountTimeout
-
-	retryFailedTxAmount = 3
+var (
+	horizonDomainFlag = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
 )
 
 func logBalance(account *horizon.Account, logger log.Logger) {
@@ -38,7 +37,10 @@ func logBalances(keypairs []keypair.KP, logger log.Logger) {
 	for i, kp := range keypairs {
 		l := log.With(logger, "account_index", i)
 		if kp != nil {
-			acc := account.Get(kp.Address(), l)
+			acc, err := account.Get(*horizonDomainFlag, kp.Address(), l)
+			if err != nil {
+				os.Exit(1)
+			}
 			logBalance(acc, l)
 		}
 	}
@@ -50,20 +52,27 @@ func main() {
 	// logger = log.With(logger, "time", log.DefaultTimestampUTC())
 	// logger = log.With(logger, "caller", log.Caller(3))
 
+	flag.Parse()
+
+	level.Info(logger).Log("horizon_address", *horizonDomainFlag)
+
 	funderKP := keypair.MustParse(funderSeed)
-	funderAccount := account.Get(funderKP.Address(), logger)
+	funderAccount, err := account.Get(*horizonDomainFlag, funderKP.Address(), logger)
+	if err != nil {
+		os.Exit(1)
+	}
 	logBalance(funderAccount, log.With(logger, "msg", "funder account info", "address", funderKP.Address()[:5], "seed", funderSeed))
 
-	keypairs, err := account.Create(funderKP.(*keypair.Full), accountsNum, fundAmount, logger)
+	keypairs, err := account.Create(*horizonDomainFlag, funderKP.(*keypair.Full), accountsNum, fundAmount, logger)
 	if err != nil {
-		return
+		os.Exit(1)
 	}
 	logBalances(keypairs, logger)
 
 	var wg sync.WaitGroup
 	for i, kp := range keypairs {
 		wg.Add(1)
-		go func(kp keypair.KP) {
+		go func(i int, kp keypair.KP) {
 			defer wg.Done()
 
 			l := log.With(logger, "account_index", i)
@@ -73,14 +82,13 @@ func main() {
 					continue
 				}
 
-				l = log.With(l, "iteration", j)
-
-				if err := transaction.Transfer(kp, other, transferAmount, l); err != nil {
+				err := transaction.Transfer(*horizonDomainFlag, kp, other, transferAmount, log.With(l, "iteration", j))
+				if err != nil {
 					level.Error(logger).Log("msg", err)
 					os.Exit(1)
 				}
 			}
-		}(kp)
+		}(i, kp)
 	}
 	wg.Wait()
 

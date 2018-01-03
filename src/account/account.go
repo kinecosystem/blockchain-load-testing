@@ -18,10 +18,11 @@ import (
 )
 
 const (
-	fundAccountTimeout = 10 * time.Second
+	fundTimeout = 10 * time.Second
+	getTimeout  = fundTimeout
 )
 
-func Create(funder *keypair.Full, accountsNum int, fundAmount string, logger log.Logger) ([]keypair.KP, error) {
+func Create(horizonAddr string, funder *keypair.Full, accountsNum int, fundAmount string, logger log.Logger) ([]keypair.KP, error) {
 	level.Info(logger).Log("msg", "creating accounts", "accounts_num", accountsNum)
 
 	ops := make([]build.TransactionMutator, 0, accountsNum+3)
@@ -37,7 +38,7 @@ func Create(funder *keypair.Full, accountsNum int, fundAmount string, logger log
 
 		kp, err := keypair.Random()
 		if err != nil {
-			level.Error(logger).Log("msg", err, "accounts_num_index", i, "seed", kp.Seed())
+			level.Error(logger).Log("msg", err, "account_index", i, "seed", kp.Seed())
 			return nil, err
 		}
 		keypairs[i] = kp
@@ -52,7 +53,7 @@ func Create(funder *keypair.Full, accountsNum int, fundAmount string, logger log
 	level.Info(logger).Log("msg", "submitting create account transaction")
 
 	txBuilder := build.Transaction(ops...)
-	err := transaction.SubmitWithRetry(txBuilder, funder.Seed(), logger)
+	err := transaction.SubmitWithRetry(horizonAddr, txBuilder, funder.Seed(), logger)
 	if err != nil {
 		txerrors.GetTxErrorResultCodes(err, logger)
 		return nil, err
@@ -61,7 +62,7 @@ func Create(funder *keypair.Full, accountsNum int, fundAmount string, logger log
 	for i, kp := range keypairs {
 		level.Info(logger).Log(
 			"msg", "new account created",
-			"accounts_num_index", i,
+			"account_index", i,
 			"address", kp.Address()[:5],
 			"seed", kp.(*keypair.Full).Seed())
 	}
@@ -69,26 +70,30 @@ func Create(funder *keypair.Full, accountsNum int, fundAmount string, logger log
 	return keypairs, nil
 }
 
-func Get(address string, logger log.Logger) *horizon.Account {
+func Get(horizonAddr, address string, logger log.Logger) (*horizon.Account, error) {
 	l := log.With(logger, "address", address[:5])
 
-	account, err := horizon.DefaultTestNetClient.LoadAccount(address)
+	client := horizon.Client{
+		URL:  horizonAddr,
+		HTTP: &http.Client{Timeout: getTimeout},
+	}
+	account, err := client.LoadAccount(address)
 	if err != nil {
 		level.Error(l).Log("msg", err)
-		return nil
+		return nil, err
 	}
 
-	return &account
+	return &account, nil
 }
 
-func Fund(kp keypair.KP, logger log.Logger) error {
+func Fund(horizonAddr string, kp keypair.KP, logger log.Logger) error {
 	l := log.With(logger, "address", kp.Address()[:5])
 
 	level.Info(l).Log("msg", "sending funding request", "address", kp.Address()[:5])
 
-	client := http.Client{Timeout: fundAccountTimeout}
+	client := http.Client{Timeout: fundTimeout}
 
-	res, err := client.Get(fmt.Sprintf("https://horizon-testnet.stellar.org/friendbot?addr=%s", kp.Address()))
+	res, err := client.Get(fmt.Sprintf("%s/friendbot?addr=%s", horizonAddr, kp.Address()))
 	if err != nil {
 		return err
 	}
