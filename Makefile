@@ -1,8 +1,10 @@
 default: ;
 .DEFAULT_GOAL: default
 
+horizon_addr := http://localhost:8000
+
 benchmark:
-	go run cmd/benchmark/main.go
+	go run cmd/benchmark/main.go -address $(horizon_addr)
 .PHONY: benchmark
 
 fund:

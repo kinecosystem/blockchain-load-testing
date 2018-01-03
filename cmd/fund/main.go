@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 
 	"github.com/go-kit/kit/log"
@@ -11,12 +12,18 @@ import (
 	"github.com/kinfoundation/stellar-benchmark/src/account"
 )
 
+var (
+	horizonDomainFlag = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
+)
+
 func main() {
 	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout))
 	// logger = level.NewFilter(logger, level.AllowDebug())
 	logger = level.NewFilter(logger, level.AllowInfo())
 	logger = log.With(logger, "time", log.DefaultTimestampUTC())
 	// logger = log.With(logger, "caller", log.Caller(3))
+
+	flag.Parse()
 
 	kp, err := keypair.Random()
 	if err != nil {
@@ -26,7 +33,7 @@ func main() {
 
 	level.Info(logger).Log("msg", "keypair created", "address", kp.Address(), "seed", kp.Seed())
 
-	if err := account.Fund(kp, logger); err != nil {
+	if err := account.Fund(*horizonDomainFlag, kp, logger); err != nil {
 		level.Error(logger).Log("msg", err)
 		os.Exit(1)
 	}
