@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  horizon:
+    image: stellar/quickstart
+    command: --testnet
+    ports:
+      - 8000:8000
+    volumes:
+      - ./run/horizon:/opt/stellar
+      - ./run/log:/var/log/supervisor
