@@ -6,6 +6,7 @@ services:
     command: --testnet
     ports:
       - 8000:8000
+      - 11626:11626
     volumes:
       - ./run/horizon:/opt/stellar
       - ./run/log:/var/log/supervisor
