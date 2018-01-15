@@ -1,3 +1,7 @@
 /glide
 /vendor
+
 /run
+
+/*.log
+/keypairs.json
