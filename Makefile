@@ -1,8 +1,10 @@
 default: ;
 .DEFAULT_GOAL: default
 
-loadtest:
+build:
 	go build -o loadtest cmd/loadtest/*.go
+	go build -o create cmd/create/*.go
+	go build -o merge cmd/merge/*.go
 .PHONY: loadtest
 
 glide_version := v0.13.1
