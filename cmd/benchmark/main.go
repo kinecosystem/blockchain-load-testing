@@ -1,96 +1,141 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"fmt"
+	"net/http"
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
+	"time"
 
-	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/stellar/go/clients/horizon"
 	"github.com/stellar/go/keypair"
+	"golang.org/x/time/rate"
 
-	"github.com/kinfoundation/stellar-benchmark/src/account"
-	"github.com/kinfoundation/stellar-benchmark/src/transaction"
+	"github.com/kinfoundation/stellar-benchmark/cmd/benchmark/sequence"
+	"github.com/kinfoundation/stellar-benchmark/cmd/benchmark/submitter"
 )
 
-const (
-	funderSeed = "SCY4OBPZQCCSJLC22VD47JXCLJKXQKM5VR56RY2CPY4TPCOK37G57QJA"
-
-	accountsNum = 100
-
-	fundAmount     = "30"
-	transferAmount = "0.01"
-)
+const ClientTimeout = 30 * time.Second
 
 var (
-	horizonDomainFlag = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
+	debugFlag              = flag.Bool("debug", false, "enable debug log level")
+	horizonDomainFlag      = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
+	logFileFlag            = flag.String("log", "benchmark.log", "log file path")
+	destinationAddressFlag = flag.String("dest", "", "destination account address")
+	accountsFileFlag       = flag.String("accounts", "accounts.json", "accounts keypairs input file")
+	transactionAmountFlag  = flag.String("txamount", "0.00001", "transaction amount")
+	testTimeLengthFlag     = flag.Int("length", 60, "test length in seconds")
+	numSubmittersFlag      = flag.Int("submitters", 3, "amount of concurrent submitters")
+	txsPerSecondFlag       = flag.Float64("rate", 10, "transaction rate limit in seconds")
+	burstLimitFlag         = flag.Int("burst", 3, "burst rate limit")
 )
 
-func logBalance(account *horizon.Account, logger log.Logger) {
-	for _, balance := range account.Balances {
-		level.Info(logger).Log("balance", balance.Balance, "asset_type", balance.Asset.Type)
-	}
-}
-
-func logBalances(keypairs []keypair.KP, logger log.Logger) {
-	for i, kp := range keypairs {
-		l := log.With(logger, "account_index", i)
-		if kp != nil {
-			acc, err := account.Get(*horizonDomainFlag, kp.Address(), l)
-			if err != nil {
-				os.Exit(1)
-			}
-			logBalance(acc, l)
-		}
-	}
-}
-
-func main() {
-	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout))
-	logger = level.NewFilter(logger, level.AllowDebug())
-	// logger = log.With(logger, "time", log.DefaultTimestampUTC())
-	// logger = log.With(logger, "caller", log.Caller(3))
-
+// Run is the main function of this application. It returns a status exit code for main().
+func Run() int {
 	flag.Parse()
 
-	level.Info(logger).Log("horizon_address", *horizonDomainFlag)
-
-	funderKP := keypair.MustParse(funderSeed)
-	funderAccount, err := account.Get(*horizonDomainFlag, funderKP.Address(), logger)
-	if err != nil {
-		os.Exit(1)
+	switch {
+	case *destinationAddressFlag == "":
+		fmt.Println("-dest flag not set")
+		return 1
 	}
-	logBalance(funderAccount, log.With(logger, "msg", "funder account info", "address", funderKP.Address()[:5], "seed", funderSeed))
 
-	keypairs, err := account.Create(*horizonDomainFlag, funderKP.(*keypair.Full), accountsNum, fundAmount, logger)
+	// Init logger
+	logFile, err := os.OpenFile(*logFileFlag, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
-		os.Exit(1)
+		panic(err)
 	}
-	logBalances(keypairs, logger)
+	defer logFile.Close()
+	logger := InitLoggers(logFile, *debugFlag)
 
+	// Load destination account address
+	destKP, err := keypair.Parse(*destinationAddressFlag)
+	if err != nil {
+		level.Error(logger).Log("msg", err)
+		return 1
+	}
+
+	// Load submitter account keypairs
+	keypairs, err := InitKeypairs(*accountsFileFlag)
+	if err != nil {
+		level.Error(logger).Log("msg", err)
+		return 1
+	}
+
+	client := horizon.Client{
+		URL:  *horizonDomainFlag,
+		HTTP: &http.Client{Timeout: ClientTimeout},
+	}
+
+	LogBalances(&client, keypairs, logger)
+
+	// Init rate limiter
+	limiter := rate.NewLimiter(rate.Limit(*txsPerSecondFlag), *burstLimitFlag)
+
+	// Create top-level context. Will be sent to submitter goroutines for stopping them
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // Cancel the context if not done so already when test is complete.
+
+	// Generate workers for submitting operations.
+	submitters := make([]*submitter.Submitter, *numSubmittersFlag)
+	sequenceProvider := sequence.New(&client)
+	for i := 0; i < *numSubmittersFlag; i++ {
+		submitters[i], err = submitter.New(&client, sequenceProvider, keypairs[i].(*keypair.Full), destKP, *transactionAmountFlag)
+		if err != nil {
+			level.Error(logger).Log("msg", err)
+			return 1
+		}
+	}
+
+	// Start transaction submission
+	startTime := time.Now()
+	for i := 0; i < *numSubmittersFlag; i++ {
+		submitters[i].StartSubmission(limiter, ctx, logger)
+	}
+
+	// Listen for OS signals
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	// Stop when timer is up or when a signal is caught
+	select {
+	case <-time.After(time.Duration(*testTimeLengthFlag) * time.Second):
+		level.Info(logger).Log("msg", "test time reached")
+		break
+	case s := <-done:
+		level.Info(logger).Log("msg", "received signal", "type", s)
+		break
+	}
+	level.Info(logger).Log("msg", "closing")
+
+	// Stop all submitters
+	cancel()
 	var wg sync.WaitGroup
-	for i, kp := range keypairs {
+	for i, s := range submitters {
 		wg.Add(1)
-		go func(i int, kp keypair.KP) {
+		go func(i int, s *submitter.Submitter) {
 			defer wg.Done()
-
-			l := log.With(logger, "account_index", i)
-
-			for j, other := range keypairs {
-				if kp.Address() == other.Address() {
-					continue
-				}
-
-				err := transaction.Transfer(*horizonDomainFlag, kp, other, transferAmount, log.With(l, "iteration", j))
-				if err != nil {
-					level.Error(logger).Log("msg", err)
-					os.Exit(1)
-				}
-			}
-		}(i, kp)
+			<-submitters[i].Stopped
+		}(i, s)
 	}
 	wg.Wait()
 
-	logBalances(keypairs, logger)
+	level.Info(logger).Log("execution_time", time.Since(startTime))
+
+	// Print destination and test accounts balances
+	destAccount, err := client.LoadAccount(destKP.Address())
+	LogBalance(&destAccount, logger)
+
+	LogBalances(&client, keypairs, logger)
+
+	return 0
+}
+
+func main() {
+	os.Exit(Run())
 }
