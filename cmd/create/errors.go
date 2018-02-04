@@ -1,4 +1,4 @@
-package errors
+package main
 
 import (
 	"github.com/go-kit/kit/log"
