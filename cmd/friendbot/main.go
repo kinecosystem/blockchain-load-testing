@@ -1,3 +1,4 @@
+// Found an account (on testnet) using friendbot.
 package main
 
 import (

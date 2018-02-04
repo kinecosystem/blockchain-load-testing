@@ -6,7 +6,7 @@ set -e
 
 DEBUG="${DEBUG:-true}"
 HORIZON="${HORIZON:-https://horizon-testnet.stellar.org}"
-LOG="${LOG:-benchmark.log}"
+LOG="${LOG:-loadtest.log}"
 ACCOUNTS_FILE="${ACCOUNTS_FILE:-accounts.json}"
 TX_AMOUNT="${TX_AMOUNT:-0.0001}"
 TIME_LENGTH="${TIME_LENGTH:-10800}"  # three hours
@@ -14,9 +14,9 @@ SUBMITTERS="${SUBMITTERS:-120}"
 RATE="${RATE:-2}"
 BURST="${BURST:-2}"
 
-DEST_ACCOUNT="GBSBN3ES75CC5PTTOAQB473D4DTH6TWH6JJBVA3SY6NLGHVUV6KCMW2U"
+DEST_ACCOUNT=""
 
-./benchmark \
+./loadtest \
     -debug=$DEBUG \
     -address $HORIZON \
     -log $LOG \

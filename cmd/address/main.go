@@ -1,4 +1,4 @@
-// Get account address from given seed
+// Get account address from given seed.
 package main
 
 import (

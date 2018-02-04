@@ -1,4 +1,4 @@
-package: github.com/kinfoundation/stellar-benchmark
+package: github.com/kinfoundation/stellar-load-testing
 import:
 - package: github.com/stellar/go
   subpackages:

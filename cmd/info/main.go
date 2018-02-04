@@ -1,4 +1,4 @@
-// Print account info for given address
+// Print account info for given address.
 package main
 
 import (
