@@ -1,3 +1,4 @@
+// Load test the Stellar network.
 package main
 
 import (

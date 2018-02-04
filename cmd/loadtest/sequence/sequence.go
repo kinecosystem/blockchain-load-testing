@@ -1,3 +1,5 @@
+// Package sequence implements an in-app sequence provider for the Stellar network,
+// independent of Horizon nodes.
 package sequence
 
 import (

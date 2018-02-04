@@ -1,5 +1,5 @@
 // Package submitter implements a single transaction submitter to the Stellar network.
-// Multiple Submitter instances are used concurrently for load-testing the network.
+// Multiple Submitter instances are used concurrently for load testing the network.
 package submitter
 
 import (
