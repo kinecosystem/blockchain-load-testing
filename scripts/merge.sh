@@ -7,7 +7,7 @@ set -e
 HORIZON="${HORIZON:-https://horizon-testnet.stellar.org}"
 ACCOUNTS_FILE="${ACCOUNTS_FILE:-accounts.json}"
 
-DEST_SEED="SAPJIKONFL75FU4NVPW7GWXFWBIM2N4DRSIAV2HLFOG2UGO26XVZGNA2"
+DEST_SEED=""
 
 go run cmd/merge/*.go \
     -address $HORIZON \
