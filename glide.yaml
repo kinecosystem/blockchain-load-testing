@@ -11,3 +11,6 @@ import:
   subpackages:
   - log
   - log/level
+- package: golang.org/x/time
+  subpackages:
+  - rate

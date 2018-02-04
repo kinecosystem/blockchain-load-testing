@@ -1,5 +1,5 @@
-hash: dd6550c4ff6914fce20caac54c8114ab556f129531f014901a777862ead1458d
-updated: 2018-01-01T14:56:12.414200538+02:00
+hash: 6edd5c77aa5e726797a54bca6592a2c1deb4593709762684dacfcda112fb63e3
+updated: 2018-02-04T15:11:48.505874571+02:00
 imports:
 - name: github.com/agl/ed25519
   version: 278e1ec8e8a6e017cd07577924d6766039146ced
@@ -13,11 +13,15 @@ imports:
 - name: github.com/getsentry/raven-go
   version: c9d3cc542ad199f62c0264286be537f9bce6063c
   repo: https://github.com/getsentry/raven-go
+- name: github.com/go-errors/errors
+  version: a41850380601eeb43f4350f7d17c6bbd8944aaf8
+  repo: https://github.com/go-errors/errors
 - name: github.com/go-kit/kit
   version: 4dc7be5d2d12881735283bcab7352178e190fc71
   subpackages:
   - log
   - log/level
+  - log/term
 - name: github.com/go-logfmt/logfmt
   version: d4327190ff838312623b09bfeb50d7c93c8d9c1d
 - name: github.com/go-stack/stack
@@ -40,8 +44,16 @@ imports:
   repo: https://github.com/pmezard/go-difflib
   subpackages:
   - difflib
+- name: github.com/segmentio/go-loggly
+  version: eb91657e62b25699dd4e84d5562735440d4beace
+  repo: https://github.com/segmentio/go-loggly
+- name: github.com/sirupsen/logrus
+  version: 68cec9f21fbf3ea8d8f98c044bc6ce05f17b267a
+  repo: https://github.com/sirupsen/logrus
+  subpackages:
+  - hooks/test
 - name: github.com/stellar/go
-  version: 35348896fb5e4f18794afa757f2e8d6ff1c10824
+  version: 333387f23a0f205a3c00bdc33cb454e0fda32095
   subpackages:
   - amount
   - build
@@ -53,6 +65,9 @@ imports:
   - price
   - strkey
   - support/errors
+  - support/http/mutil
+  - support/log
+  - support/render/problem
   - xdr
 - name: github.com/stretchr/objx
   version: 1a9d0bb9f541897e62256577b352fdbc1fb4fd94
@@ -72,4 +87,12 @@ imports:
   - http2
   - netutil
   - publicsuffix
+- name: golang.org/x/sys
+  version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
+  subpackages:
+  - unix
+- name: golang.org/x/time
+  version: 6dc17368e09b0e8634d71cac8168d853e869a0c7
+  subpackages:
+  - rate
 testImports: []
