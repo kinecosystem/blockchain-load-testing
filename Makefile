@@ -1,6 +1,10 @@
 default: ;
 .DEFAULT_GOAL: default
 
+loadtest:
+	go build -o loadtest cmd/loadtest/*.go
+.PHONY: loadtest
+
 glide_version := v0.13.1
 glide_arch := linux-amd64
 glide:
