@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"flag"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"os"
 	"time"
@@ -16,18 +17,14 @@ import (
 	"github.com/stellar/go/build"
 	"github.com/stellar/go/clients/horizon"
 	"github.com/stellar/go/keypair"
-
-	"github.com/kinfoundation/stellar-benchmark/src/errors"
 )
 
-const (
-	fundAmount = "20"
-)
+const maxMergeOps = 19
 
 var (
 	horizonDomainFlag   = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
 	destinationSeedFlag = flag.String("dest", "", "destination account seed")
-	accountsFile        = flag.String("input", "keypairs.json", "keypairs inputs file")
+	accountsFile        = flag.String("input", "accounts.json", "keypairs input file")
 )
 
 type Keypair struct {
@@ -67,56 +64,69 @@ func main() {
 
 	// Get destination account
 	destKP := keypair.MustParse(*destinationSeedFlag)
-	signers := []string{destKP.(*keypair.Full).Seed()}
 
-	// Generate account merge operations
-	var ops []build.TransactionMutator
-	for i, kp := range keypairs.Keypairs {
-		level.Debug(logger).Log("account_index", i, "msg", "adding merge operation")
+	// Send transactions in batches of 20 signers (Stellar limitation)
+	for batchIndex := 0; batchIndex <= (len(keypairs.Keypairs)+1)/(maxMergeOps+1); batchIndex++ {
+		batch := keypairs.Keypairs[batchIndex*maxMergeOps : int(math.Min(float64((batchIndex+1)*maxMergeOps), float64(len(keypairs.Keypairs))))]
 
+		signers := []string{destKP.(*keypair.Full).Seed()}
+
+		// Generate account merge operations
+		var ops []build.TransactionMutator
+		for i, kp := range batch {
+			level.Debug(logger).Log("account_index", batchIndex*maxMergeOps+i, "msg", "adding merge operation")
+
+			ops = append(
+				ops,
+				build.AccountMerge(
+					build.SourceAccount{AddressOrSeed: kp.Address},
+					build.Destination{AddressOrSeed: destKP.Address()},
+				),
+			)
+
+			signers = append(signers, kp.Seed)
+		}
+
+		// Add transaction submitter source account and network information
+		client := horizon.Client{
+			URL:  *horizonDomainFlag,
+			HTTP: &http.Client{Timeout: 5 * time.Second},
+		}
 		ops = append(
-			ops,
-			build.AccountMerge(
-				build.SourceAccount{AddressOrSeed: kp.Address},
-				build.Destination{AddressOrSeed: destKP.Address()},
-			),
+			[]build.TransactionMutator{
+				build.SourceAccount{AddressOrSeed: destKP.(*keypair.Full).Seed()},
+				build.TestNetwork,
+				build.AutoSequence{SequenceProvider: &client},
+			},
+			ops...,
 		)
 
-		signers = append(signers, kp.Seed)
+		// Generate and submit transaction
+		txBuilder, err := build.Transaction(ops...)
+		if err != nil {
+			level.Error(logger).Log("msg", err)
+			os.Exit(1)
+		}
+		txEnv, err := txBuilder.Sign(signers...)
+		if err != nil {
+			level.Error(logger).Log("msg", err)
+			os.Exit(1)
+		}
+		var txEnvB64 string
+		txEnvB64, err = txEnv.Base64()
+		if err != nil {
+			level.Error(logger).Log("msg", err)
+			os.Exit(1)
+		}
+
+		level.Info(logger).Log("msg", "submitting transaction")
+
+		_, err = client.SubmitTransaction(txEnvB64)
+		if err == nil {
+			level.Info(logger).Log("msg", "submit success")
+			continue
+		}
+
+		GetTxErrorResultCodes(err, logger)
 	}
-
-	// Add transaction submitter source account and network information
-	client := horizon.Client{
-		URL:  *horizonDomainFlag,
-		HTTP: &http.Client{Timeout: 5 * time.Second},
-	}
-	ops = append(
-		[]build.TransactionMutator{
-			build.SourceAccount{AddressOrSeed: destKP.(*keypair.Full).Seed()},
-			build.TestNetwork,
-			build.AutoSequence{SequenceProvider: &client},
-		},
-		ops...,
-	)
-
-	// Generate and submit transaction
-	txBuilder := build.Transaction(ops...)
-	txEnv := txBuilder.Sign(signers...)
-	var txEnvB64 string
-	txEnvB64, err = txEnv.Base64()
-	if err != nil {
-		level.Error(logger).Log("msg", err)
-		os.Exit(1)
-	}
-
-	level.Info(logger).Log("msg", "submitting transaction")
-
-	_, err = client.SubmitTransaction(txEnvB64)
-	if err == nil {
-		level.Info(logger).Log("msg", "submit success")
-		return
-	}
-
-	errors.GetTxErrorResultCodes(err, logger)
-	os.Exit(1)
 }
