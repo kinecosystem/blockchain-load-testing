@@ -1,3 +1,4 @@
+// Package errors implements Horizon error handling and logging.
 package errors
 
 import (

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"flag"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"time"
 
@@ -14,19 +15,18 @@ import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/stellar/go/clients/horizon"
 	"github.com/stellar/go/keypair"
-
-	"github.com/kinfoundation/stellar-benchmark/src/account"
 )
 
 const (
-	fundAmount = "20"
+	loadAccountTimeout = 5 * time.Second
 )
 
 var (
 	horizonDomainFlag = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
 	funderSeedFlag    = flag.String("funder", "", "funder seed")
 	accountsNumFlag   = flag.Int("accounts", 0, "amount of accounts to create and fund")
-	keypairsFile      = flag.String("output", "keypairs.json", "keypairs output file")
+	fundAmountFlag    = flag.String("amount", "0.5", "funding amount for each account")
+	keypairsFile      = flag.String("output", "accounts.json", "keypairs output file")
 )
 
 type Keypair struct {
@@ -44,18 +44,21 @@ func logBalance(account *horizon.Account, logger log.Logger) {
 	}
 }
 
-func logBalances(keypairs []keypair.KP, logger log.Logger) {
+func logBalances(client horizon.ClientInterface, keypairs []keypair.KP, logger log.Logger) {
 	for i, kp := range keypairs {
 		l := log.With(logger, "account_index", i)
+
 		if kp != nil {
-			acc, err := account.Get(*horizonDomainFlag, kp.Address(), l)
+			acc, err := client.LoadAccount(kp.Address())
 			if err != nil {
-				os.Exit(1)
+				level.Error(l).Log("msg", err)
+				continue
 			}
-			logBalance(acc, l)
+			logBalance(&acc, l)
 		}
 	}
 }
+
 func main() {
 	flag.Parse()
 
@@ -69,20 +72,26 @@ func main() {
 		level.Info(logger).Log("execution_time", time.Since(start))
 	}(logger)
 
+	client := horizon.Client{
+		URL:  *horizonDomainFlag,
+		HTTP: &http.Client{Timeout: loadAccountTimeout},
+	}
+
 	// Get funding account
 	funderKP := keypair.MustParse(*funderSeedFlag)
-	funderAccount, err := account.Get(*horizonDomainFlag, funderKP.Address(), logger)
+	funderAccount, err := client.LoadAccount(funderKP.Address())
 	if err != nil {
+		level.Error(logger).Log("msg", err)
 		os.Exit(1)
 	}
-	logBalance(funderAccount, log.With(logger, "msg", "funder account info", "address", funderKP.Address()[:5], "seed", *funderSeedFlag))
+	logBalance(&funderAccount, log.With(logger, "msg", "funder account info", "address", funderKP.Address()[:5], "seed", *funderSeedFlag))
 
 	// Create and fund accounts
-	keypairs, err := account.Create(*horizonDomainFlag, funderKP.(*keypair.Full), *accountsNumFlag, fundAmount, logger)
+	keypairs, err := Create(*horizonDomainFlag, funderKP.(*keypair.Full), *accountsNumFlag, *fundAmountFlag, logger)
 	if err != nil {
 		os.Exit(1)
 	}
-	logBalances(keypairs, logger)
+	logBalances(&client, keypairs, logger)
 
 	// Write the seeds of the created accounts to file.
 	keypairsOut := Keypairs{Keypairs: make([]Keypair, 0)}

@@ -19,7 +19,7 @@ import (
 
 var (
 	horizonDomainFlag = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
-	accountsFile      = flag.String("input", "keypairs.json", "keypairs input file")
+	accountsFile      = flag.String("input", "accounts.json", "keypairs input file")
 )
 
 type Keypair struct {
@@ -60,12 +60,12 @@ func main() {
 	}
 
 	// Log accounts
+	client := horizon.Client{
+		URL:  *horizonDomainFlag,
+		HTTP: &http.Client{Timeout: 5 * time.Second},
+	}
 	for _, kpObj := range keypairs.Keypairs {
 		kp := keypair.MustParse(kpObj.Seed)
-		client := horizon.Client{
-			URL:  *horizonDomainFlag,
-			HTTP: &http.Client{Timeout: 5 * time.Second},
-		}
 		acc, err := client.LoadAccount(kp.Address())
 		if err != nil {
 			level.Error(logger).Log("msg", err)

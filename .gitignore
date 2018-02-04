@@ -4,4 +4,10 @@
 /run
 
 /*.log
-/keypairs.json
+/*.json
+/*.txt
+/*.csv
+
+/loadtest
+/merge
+/create
