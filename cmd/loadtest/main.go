@@ -16,8 +16,8 @@ import (
 	"github.com/stellar/go/keypair"
 	"golang.org/x/time/rate"
 
-	"github.com/kinfoundation/stellar-benchmark/cmd/benchmark/sequence"
-	"github.com/kinfoundation/stellar-benchmark/cmd/benchmark/submitter"
+	"github.com/kinfoundation/stellar-load-testing/cmd/loadtest/sequence"
+	"github.com/kinfoundation/stellar-load-testing/cmd/loadtest/submitter"
 )
 
 const ClientTimeout = 30 * time.Second
