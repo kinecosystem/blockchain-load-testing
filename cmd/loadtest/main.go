@@ -26,7 +26,7 @@ const ClientTimeout = 30 * time.Second
 var (
 	debugFlag              = flag.Bool("debug", false, "enable debug log level")
 	horizonDomainFlag      = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
-	logFileFlag            = flag.String("log", "benchmark.log", "log file path")
+	logFileFlag            = flag.String("log", "loadtest.log", "log file path")
 	destinationAddressFlag = flag.String("dest", "", "destination account address")
 	accountsFileFlag       = flag.String("accounts", "accounts.json", "accounts keypairs input file")
 	transactionAmountFlag  = flag.String("txamount", "0.00001", "transaction amount")
