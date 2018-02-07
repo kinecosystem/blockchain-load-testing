@@ -21,6 +21,7 @@ import (
 	"github.com/kinfoundation/stellar-load-testing/cmd/loadtest/submitter"
 )
 
+// ClientTimeout is the Horizon HTTP request timeout.
 const ClientTimeout = 30 * time.Second
 
 var (
@@ -96,7 +97,7 @@ func Run() int {
 	// Start transaction submission
 	startTime := time.Now()
 	for i := 0; i < *numSubmittersFlag; i++ {
-		submitters[i].StartSubmission(limiter, ctx, logger)
+		submitters[i].StartSubmission(ctx, limiter, logger)
 	}
 
 	// Listen for OS signals

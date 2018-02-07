@@ -111,6 +111,6 @@ def read_log(path):
 
 if __name__ == '__main__':
     log = read_log(sys.argv[1])
-    # response_time_csv('response_times.csv', log)
-    # success_rate('success_rate.csv', log)
+    response_time_csv('response_times.csv', log)
+    success_rate('success_rate.csv', log)
     tx_rate('tx_rate.csv', log)

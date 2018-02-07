@@ -9,12 +9,14 @@ import (
 	"github.com/stellar/go/keypair"
 )
 
+// LogBalance logs given account's balances.
 func LogBalance(account *horizon.Account, logger log.Logger) {
 	for _, balance := range account.Balances {
 		level.Info(logger).Log("balance", balance.Balance, "asset_type", balance.Asset.Type)
 	}
 }
 
+// LogBalances logs given accounts' balances.
 func LogBalances(client horizon.ClientInterface, keypairs []keypair.KP, logger log.Logger) {
 	var wg sync.WaitGroup
 	for _, kp := range keypairs {

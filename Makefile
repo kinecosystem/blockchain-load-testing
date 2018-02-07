@@ -1,11 +1,14 @@
 default: ;
 .DEFAULT_GOAL: default
 
+vendor:
+	./glide install
+
 build:
 	go build -o loadtest cmd/loadtest/*.go
 	go build -o create cmd/create/*.go
 	go build -o merge cmd/merge/*.go
-.PHONY: loadtest
+.PHONY: build
 
 glide_version := v0.13.1
 glide_arch := linux-amd64
@@ -14,3 +17,11 @@ glide:
 	tar -xf ./glide.tar.gz
 	mv ./$(glide_arch)/glide ./glide
 	rm -rf ./$(glide_arch) ./glide.tar.gz
+
+clean:
+	rm -f loadtest
+	rm -f create
+	rm -f merge
+	rm -f glide
+	rm -rf vendor
+.PHONY: clean

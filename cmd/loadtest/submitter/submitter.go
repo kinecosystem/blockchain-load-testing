@@ -36,6 +36,7 @@ type Submitter struct {
 	Stopped chan struct{}
 }
 
+// New returns a new Submitter.
 func New(
 	client horizon.ClientInterface,
 	provider *sequence.Provider,
@@ -58,7 +59,7 @@ func New(
 	}
 
 	// Load and cache sequence number for given source account.
-	_, err := s.sequenceProvider.GetAndCache(s.sourceAddress)
+	_, err := s.sequenceProvider.SequenceForAccount(s.sourceAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +67,8 @@ func New(
 	return &s, nil
 }
 
-func (s *Submitter) StartSubmission(limiter *rate.Limiter, ctx context.Context, logger log.Logger) {
+// StartSubmission continously submits transactions to the network using the given rate limiter.
+func (s *Submitter) StartSubmission(ctx context.Context, limiter *rate.Limiter, logger log.Logger) {
 	logger = log.With(logger, "source_address", s.sourceAddress)
 
 	go func() {

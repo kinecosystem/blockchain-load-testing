@@ -7,11 +7,13 @@ import (
 	"github.com/stellar/go/keypair"
 )
 
+// KeypairJSON defines a single account structure for loading test account information.
 type KeypairJSON struct {
 	Seed    string `json:"seed"`
 	Address string `json:"address"`
 }
 
+// KeypairsJSON defines the accounts.json file structure for reading test account information.
 type KeypairsJSON struct {
 	Keypairs []KeypairJSON `json:"keypairs"`
 }
