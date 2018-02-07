@@ -15,7 +15,7 @@ This application was developed using Go 1.9, though earlier versions may work as
 make glide
 
 # install dependencies
-./glide install
+make vendor
 
 # build binaries
 make build
