@@ -37,36 +37,8 @@ func New(c horizon.ClientInterface) *Provider {
 	}
 }
 
-// SequenceForAccount returns the next available sequence number for given account
-// address by fetching the current sequence and increasing it by one.
+// SequenceForAccount returns the sequence number for given account using local cache.
 func (p *Provider) SequenceForAccount(address string) (xdr.SequenceNumber, error) {
-	p.locker.Lock()
-	defer p.locker.Unlock()
-
-	seq, err := p.getAndCache(address)
-	if err != nil {
-		return 0, err
-	}
-
-	return seq, nil
-	// newSeq := seq + 1
-	// p.sequences[address] = newSeq
-	// return newSeq, nil
-}
-
-// GetAndCache fetches, caches and returns the current sequence number for the given
-// account address.
-//
-// Note this function can act as a "cache warmup" for an account,
-// since it loads the sequence number from Horizon when called for the first
-// time for a particular account.
-func (p *Provider) GetAndCache(address string) (xdr.SequenceNumber, error) {
-	p.locker.Lock()
-	defer p.locker.Unlock()
-	return p.getAndCache(address)
-}
-
-func (p *Provider) getAndCache(address string) (xdr.SequenceNumber, error) {
 	// Fetch sequence number from Horizon if not found in cache.
 	seq, ok := p.sequences[address]
 	if !ok {

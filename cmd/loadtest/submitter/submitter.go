@@ -59,7 +59,7 @@ func New(
 	}
 
 	// Load and cache sequence number for given source account.
-	_, err := s.sequenceProvider.GetAndCache(s.sourceAddress)
+	_, err := s.sequenceProvider.SequenceForAccount(s.sourceAddress)
 	if err != nil {
 		return nil, err
 	}
