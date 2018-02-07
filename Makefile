@@ -14,3 +14,11 @@ glide:
 	tar -xf ./glide.tar.gz
 	mv ./$(glide_arch)/glide ./glide
 	rm -rf ./$(glide_arch) ./glide.tar.gz
+
+clean:
+	rm -f loadtest
+	rm -f create
+	rm -f merge
+	rm -f glide
+	rm -rf vendor
+.PHONY: clean
