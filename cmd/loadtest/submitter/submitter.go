@@ -36,6 +36,7 @@ type Submitter struct {
 	Stopped chan struct{}
 }
 
+// New returns a new Submitter.
 func New(
 	client horizon.ClientInterface,
 	provider *sequence.Provider,

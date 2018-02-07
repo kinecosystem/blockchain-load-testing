@@ -18,12 +18,14 @@ type MultiLogger struct {
 	loggers []log.Logger
 }
 
+// NewMultiLogger returns a new MultiLogger instance that logs to given loggers.
 func NewMultiLogger(loggers ...log.Logger) *MultiLogger {
 	return &MultiLogger{
 		loggers: append([]log.Logger{}, loggers...),
 	}
 }
 
+// Log logs to all loggers.
 func (l *MultiLogger) Log(keyvals ...interface{}) error {
 	kvs := keyvals[:len(keyvals):len(keyvals)]
 	if len(kvs)%2 != 0 {

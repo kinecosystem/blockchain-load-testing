@@ -11,8 +11,8 @@ import (
 	"github.com/stellar/go/xdr"
 )
 
-// Provider provider sequence numbers for Stellar transactions,
-// with caching. This saves on executing multiple requests to an Horizon
+// Provider provides sequence numbers for Stellar transactions,
+// with local in-app caching. This saves on executing multiple requests to an Horizon
 // instance for fetching an account's sequence number.
 //
 // Note this package assumes you are using no more than a single provider for
@@ -24,7 +24,7 @@ type Provider struct {
 	locker sync.Locker
 	client horizon.ClientInterface
 
-	// Account address to sequence number mapping.
+	// Local account sequence number cache
 	sequences map[string]xdr.SequenceNumber
 }
 

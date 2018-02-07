@@ -21,6 +21,7 @@ import (
 	"github.com/kinfoundation/stellar-load-testing/cmd/loadtest/submitter"
 )
 
+// ClientTimeout is the Horizon HTTP request timeout.
 const ClientTimeout = 30 * time.Second
 
 var (
