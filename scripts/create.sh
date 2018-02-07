@@ -9,7 +9,7 @@ ACCOUNTS="${ACCOUNTS:-600}"
 ACCOUNTS_FILE="${ACCOUNTS_FILE:-accounts.json}"
 FUND_AMOUNT="${FUND_AMOUNT:-3}"
 
-FUNDER_SEED=""
+FUNDER_SEED="${FUNDER_SEED}"
 
 go run cmd/create/*.go \
     -address $HORIZON \

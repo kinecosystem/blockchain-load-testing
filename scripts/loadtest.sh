@@ -14,7 +14,7 @@ SUBMITTERS="${SUBMITTERS:-120}"
 RATE="${RATE:-2}"
 BURST="${BURST:-2}"
 
-DEST_ACCOUNT=""
+DEST_ACCOUNT="${DEST_ACCOUNT}"
 
 ./loadtest \
     -debug=$DEBUG \
