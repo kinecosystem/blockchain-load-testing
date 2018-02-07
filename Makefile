@@ -1,6 +1,9 @@
 default: ;
 .DEFAULT_GOAL: default
 
+vendor:
+	./glide install
+
 build:
 	go build -o loadtest cmd/loadtest/*.go
 	go build -o create cmd/create/*.go
