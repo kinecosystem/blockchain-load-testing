@@ -67,7 +67,8 @@ func New(
 	return &s, nil
 }
 
-func (s *Submitter) StartSubmission(limiter *rate.Limiter, ctx context.Context, logger log.Logger) {
+// StartSubmission continously submits transactions to the network using the given rate limiter.
+func (s *Submitter) StartSubmission(ctx context.Context, limiter *rate.Limiter, logger log.Logger) {
 	logger = log.With(logger, "source_address", s.sourceAddress)
 
 	go func() {

@@ -97,7 +97,7 @@ func Run() int {
 	// Start transaction submission
 	startTime := time.Now()
 	for i := 0; i < *numSubmittersFlag; i++ {
-		submitters[i].StartSubmission(limiter, ctx, logger)
+		submitters[i].StartSubmission(ctx, limiter, logger)
 	}
 
 	// Listen for OS signals
