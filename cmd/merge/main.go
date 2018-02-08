@@ -99,7 +99,7 @@ func main() {
 		// Add transaction submitter source account and network information
 		client := horizon.Client{
 			URL:  *horizonDomainFlag,
-			HTTP: &http.Client{Timeout: 5 * time.Second},
+			HTTP: &http.Client{Timeout: 20 * time.Second},
 		}
 		ops = append(
 			[]build.TransactionMutator{

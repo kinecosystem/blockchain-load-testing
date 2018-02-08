@@ -18,7 +18,7 @@ const (
 	fundTimeout = 10 * time.Second
 	getTimeout  = fundTimeout
 
-	submitTimeout       = 10 * time.Second
+	submitTimeout       = 20 * time.Second
 	retryFailedTxAmount = 10
 )
 
