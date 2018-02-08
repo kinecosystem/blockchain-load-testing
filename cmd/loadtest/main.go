@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/log/level"
+	"github.com/stellar/go/build"
 	"github.com/stellar/go/clients/horizon"
 	"github.com/stellar/go/keypair"
 	"golang.org/x/time/rate"
@@ -27,6 +28,7 @@ const ClientTimeout = 30 * time.Second
 var (
 	debugFlag              = flag.Bool("debug", false, "enable debug log level")
 	horizonDomainFlag      = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
+	publicNetworkFlag      = flag.Bool("pubnet", false, "use public network")
 	logFileFlag            = flag.String("log", "loadtest.log", "log file path")
 	destinationAddressFlag = flag.String("dest", "", "destination account address")
 	accountsFileFlag       = flag.String("accounts", "accounts.json", "accounts keypairs input file")
@@ -83,11 +85,18 @@ func Run() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // Cancel the context if not done so already when test is complete.
 
+	var network build.Network
+	if *publicNetworkFlag == true {
+		network = build.PublicNetwork
+	} else {
+		network = build.TestNetwork
+	}
+
 	// Generate workers for submitting operations.
 	submitters := make([]*submitter.Submitter, *numSubmittersFlag)
 	sequenceProvider := sequence.New(&client)
 	for i := 0; i < *numSubmittersFlag; i++ {
-		submitters[i], err = submitter.New(&client, sequenceProvider, keypairs[i].(*keypair.Full), destKP, *transactionAmountFlag)
+		submitters[i], err = submitter.New(&client, network, sequenceProvider, keypairs[i].(*keypair.Full), destKP, *transactionAmountFlag)
 		if err != nil {
 			level.Error(logger).Log("msg", err)
 			return 1

@@ -22,7 +22,7 @@ const (
 	retryFailedTxAmount = 10
 )
 
-func Create(horizonAddr string, funder *keypair.Full, accountsNum int, fundAmount string, logger log.Logger) ([]keypair.KP, error) {
+func Create(horizonAddr string, network build.Network, funder *keypair.Full, accountsNum int, fundAmount string, logger log.Logger) ([]keypair.KP, error) {
 	level.Info(logger).Log("msg", "creating accounts", "accounts_num", accountsNum)
 
 	keypairs := make([]keypair.KP, 0, accountsNum)
@@ -48,7 +48,7 @@ func Create(horizonAddr string, funder *keypair.Full, accountsNum int, fundAmoun
 
 		level.Info(logger).Log("msg", "submitting create account transaction")
 
-		err := submitWithRetry(horizonAddr, ops, funder.Seed(), logger)
+		err := submitWithRetry(horizonAddr, network, ops, funder.Seed(), logger)
 		if err != nil {
 			GetTxErrorResultCodes(err, logger)
 			return nil, err
@@ -66,7 +66,7 @@ func Create(horizonAddr string, funder *keypair.Full, accountsNum int, fundAmoun
 	return keypairs, nil
 }
 
-func submitWithRetry(horizonAddr string, ops []build.TransactionMutator, seed string, logger log.Logger) error {
+func submitWithRetry(horizonAddr string, network build.Network, ops []build.TransactionMutator, seed string, logger log.Logger) error {
 	var err error
 	for i := 0; i < retryFailedTxAmount; i++ {
 		level.Info(logger).Log("retry_index", i, "msg", "submitting transaction")
@@ -77,9 +77,8 @@ func submitWithRetry(horizonAddr string, ops []build.TransactionMutator, seed st
 
 		fullOps := append(
 			[]build.TransactionMutator{
-				build.SourceAccount{
-					AddressOrSeed: seed},
-				build.TestNetwork,
+				build.SourceAccount{AddressOrSeed: seed},
+				network,
 				build.AutoSequence{
 					SequenceProvider: &horizon.Client{
 						URL:  horizonAddr,
@@ -87,7 +86,8 @@ func submitWithRetry(horizonAddr string, ops []build.TransactionMutator, seed st
 					},
 				},
 			},
-			ops...)
+			ops...,
+		)
 
 		txBuilder, err := build.Transaction(fullOps...)
 		if err != nil {

@@ -23,6 +23,7 @@ const maxMergeOps = 19
 
 var (
 	horizonDomainFlag   = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
+	publicNetworkFlag   = flag.Bool("pubnet", false, "use public network")
 	destinationSeedFlag = flag.String("dest", "", "destination account seed")
 	accountsFile        = flag.String("input", "accounts.json", "keypairs input file")
 )
@@ -87,6 +88,14 @@ func main() {
 			signers = append(signers, kp.Seed)
 		}
 
+		// Set network where the transaction will be submitted to
+		var network build.Network
+		if *publicNetworkFlag == true {
+			network = build.PublicNetwork
+		} else {
+			network = build.TestNetwork
+		}
+
 		// Add transaction submitter source account and network information
 		client := horizon.Client{
 			URL:  *horizonDomainFlag,
@@ -95,7 +104,7 @@ func main() {
 		ops = append(
 			[]build.TransactionMutator{
 				build.SourceAccount{AddressOrSeed: destKP.(*keypair.Full).Seed()},
-				build.TestNetwork,
+				network,
 				build.AutoSequence{SequenceProvider: &client},
 			},
 			ops...,

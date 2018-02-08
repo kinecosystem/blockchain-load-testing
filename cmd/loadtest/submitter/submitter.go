@@ -21,7 +21,8 @@ import (
 //
 // The transactions always consist of a single payment operation to a predefined destination address.
 type Submitter struct {
-	client horizon.ClientInterface
+	client  *horizon.Client
+	network build.Network
 
 	sourceSeed,
 	sourceAddress,
@@ -38,14 +39,16 @@ type Submitter struct {
 
 // New returns a new Submitter.
 func New(
-	client horizon.ClientInterface,
+	client *horizon.Client,
+	network build.Network,
 	provider *sequence.Provider,
 	source *keypair.Full,
 	destination keypair.KP,
 	transferAmount string) (*Submitter, error) {
 
 	s := Submitter{
-		client: client,
+		client:  client,
+		network: network,
 
 		sourceSeed:         source.Seed(),
 		sourceAddress:      source.Address(),
@@ -102,7 +105,7 @@ func (s *Submitter) submit(logger log.Logger) error {
 
 	txBuilder, err := build.Transaction(
 		build.SourceAccount{AddressOrSeed: s.sourceAddress},
-		build.TestNetwork,
+		s.network,
 		build.AutoSequence{SequenceProvider: s.sequenceProvider},
 
 		build.Payment(
