@@ -22,7 +22,7 @@ def response_time_csv(path, log):
     buckets = {x*100: 0 for x in range(600)}
 
     for line in log:
-        if line.get('status') == 'success':
+        if line.get('transaction_status') == 'success':
             response_time = ns_to_ms(line['response_time_nanoseconds'])
             # zero two last digits e.g. 125 --> 100
             buckets[response_time // 100 * 100] += 1
@@ -40,7 +40,7 @@ def success_rate(path, log):
     success, failure = 0, 0
 
     for line in log:
-        status = line.get('status')
+        status = line.get('transaction_status')
         if status == 'success':
             success += 1
         elif  status == 'failure':
@@ -52,6 +52,7 @@ def success_rate(path, log):
 
         w.writerow(['success', success])
         w.writerow(['failure', failure])
+
 
 def tx_rate(path, log):
     buckets = collections.OrderedDict()
