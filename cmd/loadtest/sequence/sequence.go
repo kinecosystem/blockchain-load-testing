@@ -44,30 +44,48 @@ func New(c horizon.ClientInterface, logger log.Logger) *Provider {
 
 // SequenceForAccount returns the sequence number for given account using local cache.
 func (p *Provider) SequenceForAccount(address string) (xdr.SequenceNumber, error) {
-	l := log.With(p.logger, "source_address", address)
-
 	// Fetch sequence number from Horizon if not found in cache.
-	seq, ok := p.sequences[address]
-	if !ok {
-		l = log.With(l, "sequence_provider_source", "horizon client")
-
-		account, err := p.client.LoadAccount(address)
-		if err != nil {
+	var (
+		seq xdr.SequenceNumber
+		ok  bool
+		err error
+	)
+	if seq, ok = p.sequences[address]; !ok {
+		if seq, err = p.LoadSequenceWithClient(address); err != nil {
 			return 0, err
 		}
-
-		seqUint, err := strconv.ParseUint(account.Sequence, 10, 64)
-		if err != nil {
-			return 0, err
-		}
-		seq = xdr.SequenceNumber(seqUint)
-
-		p.sequences[address] = seq
 	} else {
-		l = log.With(l, "sequence_provider_source", "local cache")
+		level.Debug(p.logger).Log(
+			"msg", "sequence number fetched",
+			"sequence_number", seq,
+			"source_address", address,
+			"sequence_provider_source", "local cache")
 	}
 
-	level.Debug(l).Log("msg", "sequence number fetched", "sequence_number", seq)
+	return seq, nil
+}
+
+// LoadSequenceWithClient loads the sequence number using the provider's horizon.ClientInterface.
+// This is in contrast to loading it from local cache.
+func (p *Provider) LoadSequenceWithClient(address string) (xdr.SequenceNumber, error) {
+	account, err := p.client.LoadAccount(address)
+	if err != nil {
+		return 0, err
+	}
+
+	seqUint, err := strconv.ParseUint(account.Sequence, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	seq := xdr.SequenceNumber(seqUint)
+	p.sequences[address] = seq
+
+	level.Debug(p.logger).Log(
+		"msg", "sequence number fetched",
+		"sequence_number", seq,
+		"source_address", address,
+		"sequence_provider_source", "horizon client")
 
 	return seq, nil
 }

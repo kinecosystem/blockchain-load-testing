@@ -155,10 +155,17 @@ func (s *Submitter) submit(logger log.Logger) error {
 		}
 
 		level.Info(l).Log()
+
 		return nil
 	}
 
-	// Else log and return error
-	errors.GetTxErrorResultCodes(err, log.With(logger, "transaction_status", "failure"))
+	// Logs errors and set the current sequence number from Horizon instead of local cache
+	// if transaction failed due to bad sequence number.
+	code := errors.GetTxErrorResultCodes(err, log.With(logger, "transaction_status", "failure"))
+	if code != nil && code.TransactionCode == "tx_bad_seq" {
+		if _, err := s.sequenceProvider.LoadSequenceWithClient(s.sourceAddress); err != nil {
+			level.Error(logger).Log("msg", err)
+		}
+	}
 	return err
 }
