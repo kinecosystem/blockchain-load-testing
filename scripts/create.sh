@@ -14,7 +14,8 @@ PUBNET="${PUBNET:-}"
 
 FUNDER_SEED="${FUNDER_SEED}"
 
-go run cmd/create/*.go \
+make build
+./create \
     -address $HORIZON \
     -funder $FUNDER_SEED \
     -accounts $ACCOUNTS \

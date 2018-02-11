@@ -12,7 +12,8 @@ PUBNET="${PUBNET:-}"
 
 DEST_SEED="${DEST_SEED}"
 
-go run cmd/merge/*.go \
+make build
+./merge \
     -address $HORIZON \
     -input $ACCOUNTS_FILE \
     -dest $DEST_SEED \

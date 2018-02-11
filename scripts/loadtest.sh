@@ -19,6 +19,7 @@ PUBNET="${PUBNET:-}"
 
 DEST_ACCOUNT="${DEST_ACCOUNT}"
 
+make build
 ./loadtest \
     -debug=$DEBUG \
     -address $HORIZON \
