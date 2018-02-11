@@ -96,9 +96,10 @@ func Run() int {
 	submitters := make([]*submitter.Submitter, *numSubmittersFlag)
 	sequenceProvider := sequence.New(&client, logger)
 	for i := 0; i < *numSubmittersFlag; i++ {
+		level.Debug(logger).Log("msg", "creating submitter", "submitter_index", i)
 		submitters[i], err = submitter.New(&client, network, sequenceProvider, keypairs[i].(*keypair.Full), destKP, *transactionAmountFlag)
 		if err != nil {
-			level.Error(logger).Log("msg", err)
+			level.Error(logger).Log("msg", err, "submitter_index", i)
 			return 1
 		}
 	}

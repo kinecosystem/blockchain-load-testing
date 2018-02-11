@@ -152,6 +152,6 @@ func (s *Submitter) submit(logger log.Logger) error {
 	}
 
 	// Else log and return error
-	errors.GetTxErrorResultCodes(err, log.With(logger, "status", "failure"))
+	errors.GetTxErrorResultCodes(err, log.With(logger, "transaction_status", "failure"))
 	return err
 }
