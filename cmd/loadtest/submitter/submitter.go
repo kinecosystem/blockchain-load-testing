@@ -149,8 +149,7 @@ func (s *Submitter) submit(logger log.Logger) error {
 	if err == nil {
 		l := log.With(logger, "transaction_status", "success")
 
-		_, err := s.sequenceProvider.IncrementSequence(s.sourceAddress)
-		if err != nil {
+		if _, err := s.sequenceProvider.IncrementSequence(s.sourceAddress); err != nil {
 			level.Error(l).Log("sequence_provider_error", err)
 			return nil
 		}
