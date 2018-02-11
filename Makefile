@@ -18,10 +18,16 @@ glide:
 	mv ./$(glide_arch)/glide ./glide
 	rm -rf ./$(glide_arch) ./glide.tar.gz
 
-clean:
+clean: clean-bin clean-vendor
+.PHONY: clean
+
+clean-bin:
 	rm -f loadtest
 	rm -f create
 	rm -f merge
+.PHONY: clean-bin
+
+clean-vendor:
 	rm -f glide
 	rm -rf vendor
-.PHONY: clean
+.PHONY: clean-vendor
