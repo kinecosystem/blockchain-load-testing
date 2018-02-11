@@ -14,6 +14,9 @@ SUBMITTERS="${SUBMITTERS:-120}"
 RATE="${RATE:-2}"
 BURST="${BURST:-2}"
 
+PUBNET="${PUBNET:-}"
+# PUBNET="${PUBNET:--pubnet}"
+
 DEST_ACCOUNT="${DEST_ACCOUNT}"
 
 ./loadtest \
@@ -26,4 +29,5 @@ DEST_ACCOUNT="${DEST_ACCOUNT}"
     -submitters $SUBMITTERS \
     -rate $RATE \
     -burst $BURST \
-    -dest $DEST_ACCOUNT
+    -dest $DEST_ACCOUNT \
+    $PUBNET

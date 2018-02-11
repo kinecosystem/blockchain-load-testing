@@ -9,6 +9,9 @@ ACCOUNTS="${ACCOUNTS:-600}"
 ACCOUNTS_FILE="${ACCOUNTS_FILE:-accounts.json}"
 FUND_AMOUNT="${FUND_AMOUNT:-3}"
 
+PUBNET="${PUBNET:-}"
+# PUBNET="${PUBNET:--pubnet}"
+
 FUNDER_SEED="${FUNDER_SEED}"
 
 go run cmd/create/*.go \
@@ -16,4 +19,5 @@ go run cmd/create/*.go \
     -funder $FUNDER_SEED \
     -accounts $ACCOUNTS \
     -amount $FUND_AMOUNT \
-    -output $ACCOUNTS_FILE
+    -output $ACCOUNTS_FILE \
+    $PUBNET
