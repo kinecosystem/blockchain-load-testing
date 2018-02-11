@@ -147,7 +147,15 @@ func (s *Submitter) submit(logger log.Logger) error {
 
 	// Return success if submission was successful
 	if err == nil {
-		level.Info(logger).Log("status", "success")
+		l := log.With(logger, "transaction_status", "success")
+
+		_, err := s.sequenceProvider.IncrementSequence(s.sourceAddress)
+		if err != nil {
+			level.Error(l).Log("sequence_provider_error", err)
+			return nil
+		}
+
+		level.Info(l).Log()
 		return nil
 	}
 

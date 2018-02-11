@@ -71,3 +71,18 @@ func (p *Provider) SequenceForAccount(address string) (xdr.SequenceNumber, error
 
 	return seq, nil
 }
+
+// IncrementSequence increments the sequence number for the given account address in the local cache.
+func (p *Provider) IncrementSequence(address string) (xdr.SequenceNumber, error) {
+	seq, err := p.SequenceForAccount(address)
+	if err != nil {
+		return 0, err
+	}
+
+	newSeq := seq + 1
+	p.sequences[address] = newSeq
+
+	level.Debug(p.logger).Log("msg", "sequence number incremented", "source_address", address, "sequence_number", newSeq)
+
+	return newSeq, nil
+}
