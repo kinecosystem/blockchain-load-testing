@@ -94,7 +94,7 @@ func Run() int {
 
 	// Generate workers for submitting operations.
 	submitters := make([]*submitter.Submitter, *numSubmittersFlag)
-	sequenceProvider := sequence.New(&client)
+	sequenceProvider := sequence.New(&client, logger)
 	for i := 0; i < *numSubmittersFlag; i++ {
 		submitters[i], err = submitter.New(&client, network, sequenceProvider, keypairs[i].(*keypair.Full), destKP, *transactionAmountFlag)
 		if err != nil {

@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/stellar/go/build"
 	"github.com/stellar/go/clients/horizon"
 	"github.com/stellar/go/xdr"
@@ -26,22 +28,29 @@ type Provider struct {
 
 	// Local account sequence number cache
 	sequences map[string]xdr.SequenceNumber
+
+	logger log.Logger
 }
 
 // New receives an Horizon client and returns a new Provider instance.
-func New(c horizon.ClientInterface) *Provider {
+func New(c horizon.ClientInterface, logger log.Logger) *Provider {
 	return &Provider{
 		locker:    &sync.Mutex{},
 		client:    c,
 		sequences: make(map[string]xdr.SequenceNumber),
+		logger:    logger,
 	}
 }
 
 // SequenceForAccount returns the sequence number for given account using local cache.
 func (p *Provider) SequenceForAccount(address string) (xdr.SequenceNumber, error) {
+	l := log.With(p.logger, "source_address", address)
+
 	// Fetch sequence number from Horizon if not found in cache.
 	seq, ok := p.sequences[address]
 	if !ok {
+		l = log.With(l, "sequence_provider_source", "horizon client")
+
 		account, err := p.client.LoadAccount(address)
 		if err != nil {
 			return 0, err
@@ -54,7 +63,11 @@ func (p *Provider) SequenceForAccount(address string) (xdr.SequenceNumber, error
 		seq = xdr.SequenceNumber(seqUint)
 
 		p.sequences[address] = seq
+	} else {
+		l = log.With(l, "sequence_provider_source", "local cache")
 	}
+
+	level.Debug(l).Log("msg", "sequence number fetched", "sequence_number", seq)
 
 	return seq, nil
 }
