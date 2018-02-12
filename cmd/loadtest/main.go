@@ -23,7 +23,7 @@ import (
 )
 
 // ClientTimeout is the Horizon HTTP request timeout.
-const ClientTimeout = 60 * time.Second
+const ClientTimeout = 120 * time.Second
 
 var (
 	debugFlag              = flag.Bool("debug", false, "enable debug log level")
