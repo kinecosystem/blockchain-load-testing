@@ -22,8 +22,8 @@ import (
 // and out of sync.
 type Provider struct {
 	build.SequenceProvider
+	sync.RWMutex
 
-	locker sync.Locker
 	client horizon.ClientInterface
 
 	// Local account sequence number cache
@@ -35,7 +35,7 @@ type Provider struct {
 // New receives an Horizon client and returns a new Provider instance.
 func New(c horizon.ClientInterface, logger log.Logger) *Provider {
 	return &Provider{
-		locker:    &sync.Mutex{},
+		RWMutex:   sync.RWMutex{},
 		client:    c,
 		sequences: make(map[string]xdr.SequenceNumber),
 		logger:    logger,
@@ -45,13 +45,14 @@ func New(c horizon.ClientInterface, logger log.Logger) *Provider {
 // SequenceForAccount returns the sequence number for given account using local cache.
 func (p *Provider) SequenceForAccount(address string) (xdr.SequenceNumber, error) {
 	// Fetch sequence number from Horizon if not found in cache.
-	var (
-		seq xdr.SequenceNumber
-		ok  bool
-		err error
-	)
-	if seq, ok = p.sequences[address]; !ok {
-		if seq, err = p.LoadSequenceWithClient(address); err != nil {
+	p.RLock()
+	seq, ok := p.sequences[address]
+	p.RUnlock()
+
+	if !ok {
+		var err error
+		seq, err = p.LoadSequenceWithClient(address)
+		if err != nil {
 			return 0, err
 		}
 	} else {
@@ -79,7 +80,10 @@ func (p *Provider) LoadSequenceWithClient(address string) (xdr.SequenceNumber, e
 	}
 
 	seq := xdr.SequenceNumber(seqUint)
+
+	p.Lock()
 	p.sequences[address] = seq
+	p.Unlock()
 
 	level.Debug(p.logger).Log(
 		"msg", "sequence number fetched",
@@ -98,7 +102,10 @@ func (p *Provider) IncrementSequence(address string) (xdr.SequenceNumber, error)
 	}
 
 	newSeq := seq + 1
+
+	p.Lock()
 	p.sequences[address] = newSeq
+	p.Unlock()
 
 	level.Debug(p.logger).Log("msg", "sequence number incremented", "source_address", address, "sequence_number", newSeq)
 
