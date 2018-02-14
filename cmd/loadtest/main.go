@@ -33,6 +33,7 @@ var (
 	destinationAddressFlag = flag.String("dest", "", "destination account address")
 	accountsFileFlag       = flag.String("accounts", "accounts.json", "accounts keypairs input file")
 	transactionAmountFlag  = flag.String("txamount", "0.00001", "transaction amount")
+	opsPerTxFlag           = flag.Int("ops", 1, "amount of operations per transaction")
 	testTimeLengthFlag     = flag.Int("length", 60, "test length in seconds")
 	numSubmittersFlag      = flag.Int("submitters", 3, "amount of concurrent submitters")
 	txsPerSecondFlag       = flag.Float64("rate", 10, "transaction rate limit in seconds")
@@ -97,7 +98,7 @@ func Run() int {
 	sequenceProvider := sequence.New(&client, logger)
 	for i := 0; i < *numSubmittersFlag; i++ {
 		level.Debug(logger).Log("msg", "creating submitter", "submitter_index", i)
-		submitters[i], err = submitter.New(&client, network, sequenceProvider, keypairs[i].(*keypair.Full), destKP, *transactionAmountFlag)
+		submitters[i], err = submitter.New(&client, network, sequenceProvider, keypairs[i].(*keypair.Full), destKP, *transactionAmountFlag, *opsPerTxFlag)
 		if err != nil {
 			level.Error(logger).Log("msg", err, "submitter_index", i)
 			return 1
