@@ -4,7 +4,7 @@
 set -x
 set -e
 
-HORIZON="${HORIZON:-https://horizon-testnet.stellar.org}"
+HORIZON="${HORIZON:-http://localhost:8000}"
 ACCOUNTS_FILE="${ACCOUNTS_FILE:-accounts.json}"
 
 PUBNET="${PUBNET:-}"

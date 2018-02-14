@@ -4,10 +4,10 @@
 set -x
 set -e
 
-HORIZON="${HORIZON:-https://horizon-testnet.stellar.org}"
+HORIZON="${HORIZON:-http://localhost:8000}"
 ACCOUNTS="${ACCOUNTS:-600}"
 ACCOUNTS_FILE="${ACCOUNTS_FILE:-accounts.json}"
-FUND_AMOUNT="${FUND_AMOUNT:-3}"
+FUND_AMOUNT="${FUND_AMOUNT:-2}"
 
 PUBNET="${PUBNET:-}"
 # PUBNET="${PUBNET:--pubnet}"

@@ -5,7 +5,7 @@ set -x
 set -e
 
 DEBUG="${DEBUG:-true}"
-HORIZON="${HORIZON:-https://horizon-testnet.stellar.org}"
+HORIZON="${HORIZON:-http://localhost:8000}"
 LOG="${LOG:-loadtest.log}"
 ACCOUNTS_FILE="${ACCOUNTS_FILE:-accounts.json}"
 TX_AMOUNT="${TX_AMOUNT:-0.0001}"
