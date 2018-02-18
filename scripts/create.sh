@@ -4,16 +4,21 @@
 set -x
 set -e
 
-HORIZON="${HORIZON:-https://horizon-testnet.stellar.org}"
+HORIZON="${HORIZON:-http://localhost:8000}"
 ACCOUNTS="${ACCOUNTS:-600}"
 ACCOUNTS_FILE="${ACCOUNTS_FILE:-accounts.json}"
-FUND_AMOUNT="${FUND_AMOUNT:-3}"
+FUND_AMOUNT="${FUND_AMOUNT:-2}"
+
+PUBNET="${PUBNET:-}"
+# PUBNET="${PUBNET:--pubnet}"
 
 FUNDER_SEED="${FUNDER_SEED}"
 
-go run cmd/create/*.go \
+make build
+./create \
     -address $HORIZON \
     -funder $FUNDER_SEED \
     -accounts $ACCOUNTS \
     -amount $FUND_AMOUNT \
-    -output $ACCOUNTS_FILE
+    -output $ACCOUNTS_FILE \
+    $PUBNET

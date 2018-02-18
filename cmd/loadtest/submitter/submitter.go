@@ -21,13 +21,17 @@ import (
 //
 // The transactions always consist of a single payment operation to a predefined destination address.
 type Submitter struct {
-	client horizon.ClientInterface
+	client  *horizon.Client
+	network build.Network
 
 	sourceSeed,
 	sourceAddress,
 	destinationAddress,
 
 	transferAmount string
+
+	// Amount of payment operations per transaction.
+	opsPerTx int
 
 	sequenceProvider *sequence.Provider
 
@@ -38,20 +42,25 @@ type Submitter struct {
 
 // New returns a new Submitter.
 func New(
-	client horizon.ClientInterface,
+	client *horizon.Client,
+	network build.Network,
 	provider *sequence.Provider,
 	source *keypair.Full,
 	destination keypair.KP,
-	transferAmount string) (*Submitter, error) {
+	transferAmount string,
+	opsPerTx int) (*Submitter, error) {
 
 	s := Submitter{
-		client: client,
+		client:  client,
+		network: network,
 
 		sourceSeed:         source.Seed(),
 		sourceAddress:      source.Address(),
 		destinationAddress: destination.Address(),
 
 		transferAmount: transferAmount,
+
+		opsPerTx: opsPerTx,
 
 		sequenceProvider: provider,
 
@@ -98,18 +107,24 @@ func (s *Submitter) StartSubmission(ctx context.Context, limiter *rate.Limiter, 
 // Same source and and desitnation addresses, and same amount.
 // The only property that changes is the sequence number.
 func (s *Submitter) submit(logger log.Logger) error {
-	level.Debug(logger).Log("msg", "building transaction")
+	level.Debug(logger).Log("msg", "building transaction", "ops_per_tx", s.opsPerTx)
 
-	txBuilder, err := build.Transaction(
+	ops := append(
+		[]build.TransactionMutator{},
+
 		build.SourceAccount{AddressOrSeed: s.sourceAddress},
-		build.TestNetwork,
+		s.network,
 		build.AutoSequence{SequenceProvider: s.sequenceProvider},
-
-		build.Payment(
-			build.Destination{AddressOrSeed: s.destinationAddress},
-			build.NativeAmount{Amount: s.transferAmount},
-		),
 	)
+
+	for i := 0; i < s.opsPerTx; i++ {
+		ops = append(ops, build.Payment(
+			build.Destination{AddressOrSeed: s.destinationAddress},
+			build.NativeAmount{Amount: s.transferAmount}),
+		)
+	}
+
+	txBuilder, err := build.Transaction(ops...)
 	if err != nil {
 		level.Error(logger).Log("msg", err)
 		return err
@@ -144,11 +159,25 @@ func (s *Submitter) submit(logger log.Logger) error {
 
 	// Return success if submission was successful
 	if err == nil {
-		level.Info(logger).Log("status", "success")
+		l := log.With(logger, "transaction_status", "success")
+
+		if _, err := s.sequenceProvider.IncrementSequence(s.sourceAddress); err != nil {
+			level.Error(l).Log("sequence_provider_error", err)
+			return nil
+		}
+
+		level.Info(l).Log()
+
 		return nil
 	}
 
-	// Else log and return error
-	errors.GetTxErrorResultCodes(err, log.With(logger, "status", "failure"))
+	// Logs errors and set the current sequence number from Horizon instead of local cache
+	// if transaction failed due to bad sequence number.
+	code := errors.GetTxErrorResultCodes(err, log.With(logger, "transaction_status", "failure"))
+	if code != nil && code.TransactionCode == "tx_bad_seq" {
+		if _, err := s.sequenceProvider.LoadSequenceWithClient(s.sourceAddress); err != nil {
+			level.Error(logger).Log("msg", err)
+		}
+	}
 	return err
 }

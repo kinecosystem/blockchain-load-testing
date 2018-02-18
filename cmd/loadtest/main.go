@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/log/level"
+	"github.com/stellar/go/build"
 	"github.com/stellar/go/clients/horizon"
 	"github.com/stellar/go/keypair"
 	"golang.org/x/time/rate"
@@ -22,15 +23,17 @@ import (
 )
 
 // ClientTimeout is the Horizon HTTP request timeout.
-const ClientTimeout = 30 * time.Second
+const ClientTimeout = 120 * time.Second
 
 var (
 	debugFlag              = flag.Bool("debug", false, "enable debug log level")
 	horizonDomainFlag      = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
+	publicNetworkFlag      = flag.Bool("pubnet", false, "use public network")
 	logFileFlag            = flag.String("log", "loadtest.log", "log file path")
 	destinationAddressFlag = flag.String("dest", "", "destination account address")
 	accountsFileFlag       = flag.String("accounts", "accounts.json", "accounts keypairs input file")
 	transactionAmountFlag  = flag.String("txamount", "0.00001", "transaction amount")
+	opsPerTxFlag           = flag.Int("ops", 1, "amount of operations per transaction")
 	testTimeLengthFlag     = flag.Int("length", 60, "test length in seconds")
 	numSubmittersFlag      = flag.Int("submitters", 3, "amount of concurrent submitters")
 	txsPerSecondFlag       = flag.Float64("rate", 10, "transaction rate limit in seconds")
@@ -83,13 +86,21 @@ func Run() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // Cancel the context if not done so already when test is complete.
 
+	var network build.Network
+	if *publicNetworkFlag == true {
+		network = build.PublicNetwork
+	} else {
+		network = build.TestNetwork
+	}
+
 	// Generate workers for submitting operations.
 	submitters := make([]*submitter.Submitter, *numSubmittersFlag)
-	sequenceProvider := sequence.New(&client)
+	sequenceProvider := sequence.New(&client, logger)
 	for i := 0; i < *numSubmittersFlag; i++ {
-		submitters[i], err = submitter.New(&client, sequenceProvider, keypairs[i].(*keypair.Full), destKP, *transactionAmountFlag)
+		level.Debug(logger).Log("msg", "creating submitter", "submitter_index", i)
+		submitters[i], err = submitter.New(&client, network, sequenceProvider, keypairs[i].(*keypair.Full), destKP, *transactionAmountFlag, *opsPerTxFlag)
 		if err != nil {
-			level.Error(logger).Log("msg", err)
+			level.Error(logger).Log("msg", err, "submitter_index", i)
 			return 1
 		}
 	}

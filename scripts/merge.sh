@@ -4,12 +4,17 @@
 set -x
 set -e
 
-HORIZON="${HORIZON:-https://horizon-testnet.stellar.org}"
+HORIZON="${HORIZON:-http://localhost:8000}"
 ACCOUNTS_FILE="${ACCOUNTS_FILE:-accounts.json}"
+
+PUBNET="${PUBNET:-}"
+# PUBNET="${PUBNET:--pubnet}"
 
 DEST_SEED="${DEST_SEED}"
 
-go run cmd/merge/*.go \
+make build
+./merge \
     -address $HORIZON \
     -input $ACCOUNTS_FILE \
-    -dest $DEST_SEED
+    -dest $DEST_SEED \
+    $PUBNET

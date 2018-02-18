@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/stellar/go/build"
 	"github.com/stellar/go/clients/horizon"
 	"github.com/stellar/go/keypair"
 )
@@ -23,6 +24,7 @@ const (
 
 var (
 	horizonDomainFlag = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
+	publicNetworkFlag = flag.Bool("pubnet", false, "use public network")
 	funderSeedFlag    = flag.String("funder", "", "funder seed")
 	accountsNumFlag   = flag.Int("accounts", 0, "amount of accounts to create and fund")
 	fundAmountFlag    = flag.String("amount", "0.5", "funding amount for each account")
@@ -86,8 +88,15 @@ func main() {
 	}
 	logBalance(&funderAccount, log.With(logger, "msg", "funder account info", "address", funderKP.Address()[:5], "seed", *funderSeedFlag))
 
+	var network build.Network
+	if *publicNetworkFlag == true {
+		network = build.PublicNetwork
+	} else {
+		network = build.TestNetwork
+	}
+
 	// Create and fund accounts
-	keypairs, err := Create(*horizonDomainFlag, funderKP.(*keypair.Full), *accountsNumFlag, *fundAmountFlag, logger)
+	keypairs, err := Create(*horizonDomainFlag, network, funderKP.(*keypair.Full), *accountsNumFlag, *fundAmountFlag, logger)
 	if err != nil {
 		os.Exit(1)
 	}
