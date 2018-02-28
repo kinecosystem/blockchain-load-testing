@@ -1,0 +1,18 @@
+[[source]]
+
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+
+[packages]
+
+requests = "*"
+"strict-rfc3339" = "*"
+
+
+[dev-packages]
+
+pylint = "*"
+pydocstyle = "*"
+pycodestyle = "*"
