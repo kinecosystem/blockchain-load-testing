@@ -44,5 +44,5 @@ go run cmd/friendbot
 
 ## Generate Reports
 
-[scripts/report.py](scripts/report.py) is a short Python script that parses a load test log
-and generates multiple CSV files, ready for graphs and work with a spreadsheet editor.
+The [reports/](reports/) directory contains short Python scripts that parse load test logs
+and generate CSV files, ready for charting with a spreadsheet editor like Google Spreadsheets or Excel.
