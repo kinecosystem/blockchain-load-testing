@@ -5,6 +5,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"os/signal"
@@ -28,7 +29,7 @@ const ClientTimeout = 120 * time.Second
 var (
 	debugFlag              = flag.Bool("debug", false, "enable debug log level")
 	horizonDomainFlag      = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
-	publicNetworkFlag      = flag.Bool("pubnet", false, "use public network")
+	stellarPassphraseFlag  = flag.String("passphrase", "Test SDF Network ; September 2015", "stellar network passphrase")
 	logFileFlag            = flag.String("log", "loadtest.log", "log file path")
 	destinationAddressFlag = flag.String("dest", "", "destination account address")
 	accountsFileFlag       = flag.String("accounts", "accounts.json", "accounts keypairs input file")
@@ -36,7 +37,7 @@ var (
 	opsPerTxFlag           = flag.Int("ops", 1, "amount of operations per transaction")
 	testTimeLengthFlag     = flag.Int("length", 60, "test length in seconds")
 	numSubmittersFlag      = flag.Int("submitters", 3, "amount of concurrent submitters")
-	txsPerSecondFlag       = flag.Float64("rate", 10, "transaction rate limit in seconds")
+	txsPerSecondFlag       = flag.Float64("rate", 10, "transaction rate limit in seconds. use 0 disable rate limiting")
 	burstLimitFlag         = flag.Int("burst", 3, "burst rate limit")
 )
 
@@ -48,6 +49,10 @@ func Run() int {
 	case *destinationAddressFlag == "":
 		fmt.Println("-dest flag not set")
 		return 1
+	}
+
+	if *txsPerSecondFlag == 0.0 {
+		*txsPerSecondFlag = math.Inf(1)
 	}
 
 	// Init logger
@@ -86,12 +91,7 @@ func Run() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // Cancel the context if not done so already when test is complete.
 
-	var network build.Network
-	if *publicNetworkFlag == true {
-		network = build.PublicNetwork
-	} else {
-		network = build.TestNetwork
-	}
+	network := build.Network{*stellarPassphraseFlag}
 
 	// Generate workers for submitting operations.
 	submitters := make([]*submitter.Submitter, *numSubmittersFlag)
