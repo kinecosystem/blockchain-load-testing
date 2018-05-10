@@ -29,7 +29,7 @@ const ClientTimeout = 120 * time.Second
 var (
 	debugFlag              = flag.Bool("debug", false, "enable debug log level")
 	horizonDomainFlag      = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
-	stellarPassphraseFlag  = flag.String("passphrase", "private testnet", "stellar network passphrase")
+	stellarPassphraseFlag  = flag.String("passphrase", "Test SDF Network ; September 2015", "stellar network passphrase")
 	logFileFlag            = flag.String("log", "loadtest.log", "log file path")
 	destinationAddressFlag = flag.String("dest", "", "destination account address")
 	accountsFileFlag       = flag.String("accounts", "accounts.json", "accounts keypairs input file")
