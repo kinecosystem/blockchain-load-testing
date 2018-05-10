@@ -37,7 +37,7 @@ var (
 	opsPerTxFlag           = flag.Int("ops", 1, "amount of operations per transaction")
 	testTimeLengthFlag     = flag.Int("length", 60, "test length in seconds")
 	numSubmittersFlag      = flag.Int("submitters", 3, "amount of concurrent submitters")
-	txsPerSecondFlag       = flag.Float64("rate", 10, "transaction rate limit in seconds")
+	txsPerSecondFlag       = flag.Float64("rate", 10, "transaction rate limit in seconds. use 0 disable rate limiting")
 	burstLimitFlag         = flag.Int("burst", 3, "burst rate limit")
 )
 
@@ -49,6 +49,10 @@ func Run() int {
 	case *destinationAddressFlag == "":
 		fmt.Println("-dest flag not set")
 		return 1
+	}
+
+	if *txsPerSecondFlag == 0.0 {
+		*txsPerSecondFlag = math.Inf(1)
 	}
 
 	// Init logger
@@ -79,10 +83,6 @@ func Run() int {
 	}
 
 	LogBalances(&client, keypairs, logger)
-
-	if *txsPerSecondFlag == 0.0 {
-		*txsPerSecondFlag = math.Inf(1)
-	}
 
 	// Init rate limiter
 	limiter := rate.NewLimiter(rate.Limit(*txsPerSecondFlag), *burstLimitFlag)
