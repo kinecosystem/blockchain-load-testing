@@ -11,6 +11,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"math"
 
 	"github.com/go-kit/kit/log/level"
 	"github.com/stellar/go/build"
@@ -28,7 +29,7 @@ const ClientTimeout = 120 * time.Second
 var (
 	debugFlag              = flag.Bool("debug", false, "enable debug log level")
 	horizonDomainFlag      = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
-	publicNetworkFlag      = flag.Bool("pubnet", false, "use public network")
+	stellarPassphraseFlag  = flag.String("passphrase", "private testnet", "stellar network passphrase")
 	logFileFlag            = flag.String("log", "loadtest.log", "log file path")
 	destinationAddressFlag = flag.String("dest", "", "destination account address")
 	accountsFileFlag       = flag.String("accounts", "accounts.json", "accounts keypairs input file")
@@ -79,6 +80,10 @@ func Run() int {
 
 	LogBalances(&client, keypairs, logger)
 
+	if *txsPerSecondFlag == 0.0 {
+		*txsPerSecondFlag = math.Inf(1)
+	}
+
 	// Init rate limiter
 	limiter := rate.NewLimiter(rate.Limit(*txsPerSecondFlag), *burstLimitFlag)
 
@@ -86,12 +91,7 @@ func Run() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // Cancel the context if not done so already when test is complete.
 
-	var network build.Network
-	if *publicNetworkFlag == true {
-		network = build.PublicNetwork
-	} else {
-		network = build.TestNetwork
-	}
+	network := build.Network{*stellarPassphraseFlag}
 
 	// Generate workers for submitting operations.
 	submitters := make([]*submitter.Submitter, *numSubmittersFlag)
