@@ -4,30 +4,23 @@
 set -x
 set -e
 
-COUNT=$1
-
-if [ "$COUNT" == "" ]; then
-	echo "Usage: $0 <COUNT>"
-	exit 1
-fi
-
-SUBMITTERS=$2
+SUBMITTERS=$1
 if [ "$SUBMITTERS" == "" ]; then
-	SUBMITTERS="${COUNT}"
+	SUBMITTERS=0
 fi
 
 DEBUG="${DEBUG:-true}"
 HORIZON="${HORIZON:-http://localhost:8000}"
 PASSPHRASE="${PASSPHRASE:-"private testnet"}"
 LOG="${LOG:-loadtest.log}"
-ACCOUNTS_FILE="${COUNT}.json"
+ACCOUNTS_FILE="${ACCOUNTS_FILE:-accounts.json}"
 TX_AMOUNT="${TX_AMOUNT:-0.0001}"
 OPS_PER_TX="${OPS_PER_TX:-1}"
 TIME_LENGTH="${TIME_LENGTH:-20}"
 RATE="${RATE:-0}"  # zero disables rate limiting
 BURST="${BURST:-100}"
 
-DEST_ACCOUNT="${DEST_ACCOUNT}"
+DEST_ACCOUNT="${DEST_ACCOUNT:-dest.json}"
 
 make build
 ./loadtest \
