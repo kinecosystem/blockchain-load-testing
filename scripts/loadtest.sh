@@ -9,6 +9,11 @@ if [ "$SUBMITTERS" == "" ]; then
 	SUBMITTERS=0
 fi
 
+NATIVE=true
+if [ "$2" != "" ]; then
+	NATIVE=$2
+fi
+
 DEBUG="${DEBUG:-true}"
 HORIZON="${HORIZON:-http://localhost:8000}"
 PASSPHRASE="${PASSPHRASE:-"private testnet"}"
@@ -24,6 +29,7 @@ DEST_ACCOUNT="${DEST_ACCOUNT:-dest.json}"
 
 make build
 ./loadtest \
+    -native=$NATIVE \
     -debug=$DEBUG \
     -address $HORIZON \
     -passphrase "$PASSPHRASE" \

@@ -38,6 +38,7 @@ var (
 	numSubmittersFlag      = flag.Int("submitters", 0, "amount of concurrent submitters; use 0 to use the number of accounts available")
 	txsPerSecondFlag       = flag.Float64("rate", 10, "transaction rate limit in seconds. use 0 disable rate limiting")
 	burstLimitFlag         = flag.Int("burst", 3, "burst rate limit")
+	nativeAssetFlag        = flag.Bool("native", true, "set to false to use a non-native asset")
 )
 
 // Run is the main function of this application. It returns a status exit code for main().
@@ -105,7 +106,7 @@ func Run() int {
 	// Start transaction submission
 	startTime := time.Now()
 	for i := 0; i < *numSubmittersFlag; i++ {
-		submitters[i].StartSubmission(ctx, limiter, logger)
+		submitters[i].StartSubmission(ctx, limiter, logger, *nativeAssetFlag)
 	}
 
 	// Listen for OS signals

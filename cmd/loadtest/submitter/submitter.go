@@ -78,7 +78,7 @@ func New(
 }
 
 // StartSubmission continously submits transactions to the network using the given rate limiter.
-func (s *Submitter) StartSubmission(ctx context.Context, limiter *rate.Limiter, logger log.Logger) {
+func (s *Submitter) StartSubmission(ctx context.Context, limiter *rate.Limiter, logger log.Logger, native bool) {
 	logger = log.With(logger, "source_address", s.sourceAddress)
 
 	go func() {
@@ -87,6 +87,12 @@ func (s *Submitter) StartSubmission(ctx context.Context, limiter *rate.Limiter, 
 		defer func() {
 			close(s.Stopped)
 		}()
+
+		if native {
+			level.Debug(logger).Log("msg", "using native asset")
+		} else {
+			level.Debug(logger).Log("msg", "using non-native asset")
+		}
 
 		destIndex := 0
 
@@ -105,7 +111,7 @@ func (s *Submitter) StartSubmission(ctx context.Context, limiter *rate.Limiter, 
 				continue
 			}
 
-			s.submit(logger, destIndex)
+			s.submit(logger, destIndex, native)
 		}
 	}()
 }
@@ -114,7 +120,7 @@ func (s *Submitter) StartSubmission(ctx context.Context, limiter *rate.Limiter, 
 // The transaction has the same property on every call:
 // Same source and and desitnation addresses, and same amount.
 // The only property that changes is the sequence number.
-func (s *Submitter) submit(logger log.Logger, destIndex int) error {
+func (s *Submitter) submit(logger log.Logger, destIndex int, native bool) error {
 	level.Debug(logger).Log("msg", "building transaction", "ops_per_tx", s.opsPerTx)
 
 	ops := append(
@@ -126,10 +132,19 @@ func (s *Submitter) submit(logger log.Logger, destIndex int) error {
 	)
 
 	for i := 0; i < s.opsPerTx; i++ {
-		ops = append(ops, build.Payment(
-			build.Destination{AddressOrSeed: s.destinationAddresses[destIndex].Address()},
-			build.NativeAmount{Amount: s.transferAmount}),
-		)
+		var payment build.PaymentBuilder
+
+		if native {
+			payment = build.Payment(
+				build.Destination{AddressOrSeed: s.destinationAddresses[destIndex].Address()},
+				build.NativeAmount{Amount: s.transferAmount})
+		} else {
+			payment = build.Payment(
+				build.Destination{AddressOrSeed: s.destinationAddresses[destIndex].Address()},
+				build.CreditAmount{"KIN", "GBSJ7KFU2NXACVHVN2VWQIXIV5FWH6A7OIDDTEUYTCJYGY3FJMYIDTU7", s.transferAmount})
+		}
+
+		ops = append(ops, payment)
 	}
 
 	txBuilder, err := build.Transaction(ops...)
