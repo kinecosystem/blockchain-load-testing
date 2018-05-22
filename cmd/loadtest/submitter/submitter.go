@@ -26,9 +26,10 @@ type Submitter struct {
 
 	sourceSeed,
 	sourceAddress,
-	destinationAddress,
 
 	transferAmount string
+
+	destinationAddresses []keypair.KP
 
 	// Amount of payment operations per transaction.
 	opsPerTx int
@@ -46,7 +47,7 @@ func New(
 	network build.Network,
 	provider *sequence.Provider,
 	source *keypair.Full,
-	destination keypair.KP,
+	destination []keypair.KP,
 	transferAmount string,
 	opsPerTx int) (*Submitter, error) {
 
@@ -54,9 +55,9 @@ func New(
 		client:  client,
 		network: network,
 
-		sourceSeed:         source.Seed(),
-		sourceAddress:      source.Address(),
-		destinationAddress: destination.Address(),
+		sourceSeed:           source.Seed(),
+		sourceAddress:        source.Address(),
+		destinationAddresses: destination,
 
 		transferAmount: transferAmount,
 
@@ -77,7 +78,7 @@ func New(
 }
 
 // StartSubmission continously submits transactions to the network using the given rate limiter.
-func (s *Submitter) StartSubmission(ctx context.Context, limiter *rate.Limiter, logger log.Logger) {
+func (s *Submitter) StartSubmission(ctx context.Context, limiter *rate.Limiter, logger log.Logger, native bool) {
 	logger = log.With(logger, "source_address", s.sourceAddress)
 
 	go func() {
@@ -87,7 +88,20 @@ func (s *Submitter) StartSubmission(ctx context.Context, limiter *rate.Limiter, 
 			close(s.Stopped)
 		}()
 
+		if native {
+			level.Debug(logger).Log("msg", "using native asset")
+		} else {
+			level.Debug(logger).Log("msg", "using non-native asset")
+		}
+
+		destIndex := 0
+
 		for {
+			destIndex++
+			if destIndex == len(s.destinationAddresses) {
+				destIndex = 0
+			}
+
 			if err := limiter.Wait(ctx); err != nil {
 				// Stop submitting if context is canceled,
 				// meaning submission should stop.
@@ -97,7 +111,7 @@ func (s *Submitter) StartSubmission(ctx context.Context, limiter *rate.Limiter, 
 				continue
 			}
 
-			s.submit(logger)
+			s.submit(logger, destIndex, native)
 		}
 	}()
 }
@@ -106,7 +120,7 @@ func (s *Submitter) StartSubmission(ctx context.Context, limiter *rate.Limiter, 
 // The transaction has the same property on every call:
 // Same source and and desitnation addresses, and same amount.
 // The only property that changes is the sequence number.
-func (s *Submitter) submit(logger log.Logger) error {
+func (s *Submitter) submit(logger log.Logger, destIndex int, native bool) error {
 	level.Debug(logger).Log("msg", "building transaction", "ops_per_tx", s.opsPerTx)
 
 	ops := append(
@@ -118,10 +132,15 @@ func (s *Submitter) submit(logger log.Logger) error {
 	)
 
 	for i := 0; i < s.opsPerTx; i++ {
-		ops = append(ops, build.Payment(
-			build.Destination{AddressOrSeed: s.destinationAddress},
-			build.NativeAmount{Amount: s.transferAmount}),
-		)
+		var amount build.PaymentMutator
+
+		if native {
+			amount = build.NativeAmount{Amount: s.transferAmount}
+		} else {
+			amount = build.CreditAmount{"KIN", "GBSJ7KFU2NXACVHVN2VWQIXIV5FWH6A7OIDDTEUYTCJYGY3FJMYIDTU7", s.transferAmount}
+		}
+
+		ops = append(ops, build.Payment(build.Destination{AddressOrSeed: s.destinationAddresses[destIndex].Address()}, amount))
 	}
 
 	txBuilder, err := build.Transaction(ops...)
