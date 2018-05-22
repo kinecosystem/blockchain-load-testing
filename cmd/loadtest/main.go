@@ -26,19 +26,19 @@ import (
 const ClientTimeout = 120 * time.Second
 
 var (
-	debugFlag              = flag.Bool("debug", false, "enable debug log level")
-	horizonDomainFlag      = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
-	stellarPassphraseFlag  = flag.String("passphrase", "Test SDF Network ; September 2015", "stellar network passphrase")
-	logFileFlag            = flag.String("log", "loadtest.log", "log file path")
-	destinationFileFlag		 = flag.String("dest", "dest.json", "destination keypairs input file")
-	accountsFileFlag       = flag.String("accounts", "accounts.json", "submitter keypairs input file")
-	transactionAmountFlag  = flag.String("txamount", "0.00001", "transaction amount")
-	opsPerTxFlag           = flag.Int("ops", 1, "amount of operations per transaction")
-	testTimeLengthFlag     = flag.Int("length", 60, "test length in seconds")
-	numSubmittersFlag      = flag.Int("submitters", 0, "amount of concurrent submitters; use 0 to use the number of accounts available")
-	txsPerSecondFlag       = flag.Float64("rate", 10, "transaction rate limit in seconds. use 0 disable rate limiting")
-	burstLimitFlag         = flag.Int("burst", 3, "burst rate limit")
-	nativeAssetFlag        = flag.Bool("native", true, "set to false to use a non-native asset")
+	debugFlag             = flag.Bool("debug", false, "enable debug log level")
+	horizonDomainFlag     = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
+	stellarPassphraseFlag = flag.String("passphrase", "Test SDF Network ; September 2015", "stellar network passphrase")
+	logFileFlag           = flag.String("log", "loadtest.log", "log file path")
+	destinationFileFlag   = flag.String("dest", "dest.json", "destination keypairs input file")
+	accountsFileFlag      = flag.String("accounts", "accounts.json", "submitter keypairs input file")
+	transactionAmountFlag = flag.String("txamount", "0.00001", "transaction amount")
+	opsPerTxFlag          = flag.Int("ops", 1, "amount of operations per transaction")
+	testTimeLengthFlag    = flag.Int("length", 60, "test length in seconds")
+	numSubmittersFlag     = flag.Int("submitters", 0, "amount of concurrent submitters; use 0 to use the number of accounts available")
+	txsPerSecondFlag      = flag.Float64("rate", 10, "transaction rate limit in seconds. use 0 disable rate limiting")
+	burstLimitFlag        = flag.Int("burst", 3, "burst rate limit")
+	nativeAssetFlag       = flag.Bool("native", true, "set to false to use a non-native asset")
 )
 
 // Run is the main function of this application. It returns a status exit code for main().
@@ -87,7 +87,7 @@ func Run() int {
 
 	network := build.Network{*stellarPassphraseFlag}
 
-	if *numSubmittersFlag == 0 {
+	if *numSubmittersFlag <= 0 || *numSubmittersFlag > len(keypairs) {
 		*numSubmittersFlag = len(keypairs)
 	}
 
@@ -137,10 +137,6 @@ func Run() int {
 	wg.Wait()
 
 	level.Info(logger).Log("execution_time", time.Since(startTime))
-
-	// Print destination and test accounts balances
-	// destAccount, err := client.LoadAccount(destKP.Address())
-	// LogBalance(&destAccount, logger)
 
 	LogBalances(&client, keypairs, logger)
 

@@ -132,19 +132,15 @@ func (s *Submitter) submit(logger log.Logger, destIndex int, native bool) error 
 	)
 
 	for i := 0; i < s.opsPerTx; i++ {
-		var payment build.PaymentBuilder
+		var amount build.PaymentMutator
 
 		if native {
-			payment = build.Payment(
-				build.Destination{AddressOrSeed: s.destinationAddresses[destIndex].Address()},
-				build.NativeAmount{Amount: s.transferAmount})
+			amount = build.NativeAmount{Amount: s.transferAmount}
 		} else {
-			payment = build.Payment(
-				build.Destination{AddressOrSeed: s.destinationAddresses[destIndex].Address()},
-				build.CreditAmount{"KIN", "GBSJ7KFU2NXACVHVN2VWQIXIV5FWH6A7OIDDTEUYTCJYGY3FJMYIDTU7", s.transferAmount})
+			amount = build.CreditAmount{"KIN", "GBSJ7KFU2NXACVHVN2VWQIXIV5FWH6A7OIDDTEUYTCJYGY3FJMYIDTU7", s.transferAmount}
 		}
 
-		ops = append(ops, payment)
+		ops = append(ops, build.Payment(build.Destination{AddressOrSeed: s.destinationAddresses[destIndex].Address()}, amount))
 	}
 
 	txBuilder, err := build.Transaction(ops...)
