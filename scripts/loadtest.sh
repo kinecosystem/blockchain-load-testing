@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # helper script for setting arguments
 
-set -x
+#set -x
 set -e
 
 SUBMITTERS=$1
@@ -15,8 +15,9 @@ if [ "$2" != "" ]; then
 fi
 
 DEBUG="${DEBUG:-true}"
-HORIZON="${HORIZON:-http://localhost:8000}"
-PASSPHRASE="${PASSPHRASE:-"private testnet"}"
+HORIZON1="${HORIZON1:-https://horizon-scaling-research-us-east-1a.kininfrastructure.com}"
+HORIZON2="${HORIZON2:-https://horizon-scaling-research-us-west-1a.kininfrastructure.com}"
+PASSPHRASE="${PASSPHRASE:-"scaling research"}"
 LOG="${LOG:-loadtest.log}"
 ACCOUNTS_FILE="${ACCOUNTS_FILE:-accounts.json}"
 TX_AMOUNT="${TX_AMOUNT:-0.0001}"
@@ -31,7 +32,8 @@ make build
 ./loadtest \
     -native=$NATIVE \
     -debug=$DEBUG \
-    -address $HORIZON \
+    -address $HORIZON1 \
+    -address $HORIZON2 \
     -passphrase "$PASSPHRASE" \
     -log $LOG \
     -accounts $ACCOUNTS_FILE \
