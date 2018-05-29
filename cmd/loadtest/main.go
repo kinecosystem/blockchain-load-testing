@@ -25,9 +25,22 @@ import (
 // ClientTimeout is the Horizon HTTP request timeout.
 const ClientTimeout = 120 * time.Second
 
+// Support arrays of string flags
+type arrayFlags []string
+
+func (i *arrayFlags) String() string {
+	return "my string representation"
+}
+
+func (i *arrayFlags) Set(value string) error {
+	*i = append(*i, value)
+	return nil
+}
+
+var horizonDomainFlags arrayFlags
+
 var (
 	debugFlag             = flag.Bool("debug", false, "enable debug log level")
-	horizonDomainFlag     = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
 	stellarPassphraseFlag = flag.String("passphrase", "Test SDF Network ; September 2015", "stellar network passphrase")
 	logFileFlag           = flag.String("log", "loadtest.log", "log file path")
 	destinationFileFlag   = flag.String("dest", "dest.json", "destination keypairs input file")
@@ -43,6 +56,8 @@ var (
 
 // Run is the main function of this application. It returns a status exit code for main().
 func Run() int {
+	flag.Var(&horizonDomainFlags, "address", "horizon address")
+
 	flag.Parse()
 
 	if *txsPerSecondFlag == 0.0 {
@@ -71,12 +86,17 @@ func Run() int {
 		return 1
 	}
 
-	client := horizon.Client{
-		URL:  *horizonDomainFlag,
-		HTTP: &http.Client{Timeout: ClientTimeout},
+	var clients []horizon.Client
+	for i := 0; i < len(horizonDomainFlags); i++ {
+		client := horizon.Client{
+			URL:  horizonDomainFlags[0],
+			HTTP: &http.Client{Timeout: ClientTimeout},
+		}
+
+		clients = append(clients, client)
 	}
 
-	LogBalances(&client, keypairs, logger)
+	LogBalances(&clients[0], keypairs, logger)
 
 	// Init rate limiter
 	limiter := rate.NewLimiter(rate.Limit(*txsPerSecondFlag), *burstLimitFlag)
@@ -93,10 +113,10 @@ func Run() int {
 
 	// Generate workers for submitting operations.
 	submitters := make([]*submitter.Submitter, *numSubmittersFlag)
-	sequenceProvider := sequence.New(&client, logger)
+	sequenceProvider := sequence.New(&clients[0], logger)
 	for i := 0; i < *numSubmittersFlag; i++ {
 		level.Debug(logger).Log("msg", "creating submitter", "submitter_index", i)
-		submitters[i], err = submitter.New(&client, network, sequenceProvider, keypairs[i].(*keypair.Full), destinations, *transactionAmountFlag, *opsPerTxFlag)
+		submitters[i], err = submitter.New(clients, network, sequenceProvider, keypairs[i].(*keypair.Full), destinations, *transactionAmountFlag, *opsPerTxFlag)
 		if err != nil {
 			level.Error(logger).Log("msg", err, "submitter_index", i)
 			return 1
@@ -138,7 +158,7 @@ func Run() int {
 
 	level.Info(logger).Log("execution_time", time.Since(startTime))
 
-	LogBalances(&client, keypairs, logger)
+	LogBalances(&clients[0], keypairs, logger)
 
 	return 0
 }
