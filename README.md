@@ -9,6 +9,11 @@ it claims it has.
 ## Build
 
 This application was developed using Go 1.9, though earlier versions may work as well.
+Go expects a specific folder formation: <Local path>/work/go/src/github.com/kinfoundation
+and environment variable: 
+`export GOPATH=/home/ubuntu/work/go`
+
+Run from <Local path>/work/go/src/github.com/kinfoundation/stellar-load-testing:
 
 ```bash
 # download glide
