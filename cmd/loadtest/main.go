@@ -96,8 +96,6 @@ func Run() int {
 		clients = append(clients, client)
 	}
 
-	LogBalances(&clients[0], keypairs, logger)
-
 	// Init rate limiter
 	limiter := rate.NewLimiter(rate.Limit(*txsPerSecondFlag), *burstLimitFlag)
 
@@ -157,8 +155,6 @@ func Run() int {
 	wg.Wait()
 
 	level.Info(logger).Log("execution_time", time.Since(startTime))
-
-	LogBalances(&clients[0], keypairs, logger)
 
 	return 0
 }
