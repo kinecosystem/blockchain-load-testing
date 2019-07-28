@@ -4,6 +4,8 @@
 set -x
 set -e
 
+. ./vars.sh
+
 HORIZON="${HORIZON:-http://localhost:8000}"
 ACCOUNTS="${ACCOUNTS:-600}"
 ACCOUNTS_FILE="${ACCOUNTS_FILE:-accounts.json}"
@@ -14,7 +16,7 @@ PUBNET="${PUBNET:-}"
 
 FUNDER_SEED="${FUNDER_SEED}"
 
-make build
+#make build
 ./create \
     -address $HORIZON \
     -funder $FUNDER_SEED \

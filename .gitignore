@@ -11,3 +11,6 @@
 /loadtest
 /merge
 /create
+
+.idea/*
+

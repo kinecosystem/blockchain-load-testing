@@ -25,14 +25,14 @@ HORIZON7=$HORIZON1
 DEBUG="${DEBUG:-true}"
 PASSPHRASE="${PASSPHRASE:-"Kin Scaling ; March 2019"}"
 LOG="${LOG:-loadtest.log}"
-ACCOUNTS_FILE="${ACCOUNTS_FILE:-accounts.json}"
+#ACCOUNTS_FILE="${ACCOUNTS_FILE:-accounts.json}"
 TX_AMOUNT="${TX_AMOUNT:-0.0001}"
 OPS_PER_TX="${OPS_PER_TX:-1}"
 TIME_LENGTH="${TIME_LENGTH:-20}"
 RATE="${RATE:-0}"  # zero disables rate limiting
 BURST="${BURST:-100}"
 
-DEST_ACCOUNT="${DEST_ACCOUNT:-dest.json}"
+#DEST_ACCOUNT="${DEST_ACCOUNT:-dest.json}"
 
 
 ./loadtest \
