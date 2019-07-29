@@ -34,7 +34,7 @@ L1=`curl -s "$HORIZON/ledgers?limit=1&order=desc" | grep -oP 'sequence": \K\d+'`
 
 echo -n "Running test on: `date`"
 
-./scripts/loadtest.sh $1 true > /tmp/a
+./scripts/loadtest.sh $RATE true > /tmp/a
 
 L2=`curl -s "$HORIZON/ledgers?limit=1&order=desc" | grep -oP 'sequence": \K\d+'`
 

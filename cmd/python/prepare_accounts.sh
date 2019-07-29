@@ -11,7 +11,8 @@ set -e
 #PASSPHRASE=$3
 #HORIZON=$4
 #FUNDER_SEED=$5
-#echo $CHANNEL_SEED > channel_seed
+echo $CHANNEL_SEED > channel_seed
+PASS=$PASSPHRASE
 
-pipenv run python create.py --channel-seeds-file <(echo $CHANNEL_SEED) --accounts $AMOUNT_OF_SOURCE_ACCOUNTS --passphrase "$PASSPHARSE" --horizon $HORIZON --source-account $FUNDER_SEED --json-output True >../../accounts.json
-pipenv run python create.py --channel-seeds-file <(echo $CHANNEL_SEED) --accounts $AMOUNT_OF_DESTINATION_ACCOUNTS --passphrase "$PASSPHARSE" --horizon $HORIZON --source-account $FUNDER_SEED --json-output True >../../dest.json
+pipenv sync; pipenv run python create.py --channel-seeds-file channel_seed --accounts $AMOUNT_OF_SOURCE_ACCOUNTS --passphrase "$PASS" --horizon $HORIZON --source-account $FUNDER_SEED --json-output True >../../accounts.json
+pipenv run python create.py --channel-seeds-file channel_seed --accounts $AMOUNT_OF_DESTINATION_ACCOUNTS --passphrase "$PASS" --horizon $HORIZON --source-account $FUNDER_SEED --json-output True >../../dest.json
