@@ -4,9 +4,25 @@
 
 if [ -e loadtest.log ]; then rm loadtest.log; fi
 
-export RATE=$1
+#rate
+if [ -z "$1" ]
+then
+      echo "\$1 is empty, using value from vars.sh"
+else
+      export RATE=$1
+fi
 
-for (( i=1; i<=$2; i++ )); do
+#Repetitions
+if [ -z "$2" ]
+then
+      echo "\$2 is empty, using value from vars.sh"
+else
+      export REPETITIONS=$2
+fi
+
+
+
+for (( i=1; i<=$REPETITIONS; i++ )); do
 
 cat <<EOF > /tmp/test-params
 ops/tx: $OPS_PER_TX
