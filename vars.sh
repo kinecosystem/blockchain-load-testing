@@ -1,18 +1,25 @@
 #!/bin/sh
+#IMPORTANNT: FUNDER_SEED and CHANNEL_SEED will be overridden if activated from Jenkins
 
-export ACCOUNTS_FILE=2000.json
+export RATE=80
+export REPETITION=1
+
+export AMOUNT_OF_SOURCE_ACCOUNTS=10
+export ACCOUNTS_FILE=accounts.json
 export GOPATH=~/go
-export DEST_ACCOUNT=dest20.json
+export AMOUNT_OF_DESTINATION_ACCOUNTS=2
+export DEST_ACCOUNT=dest.json
+
 export OPS_PER_TX=1
 export SUBMITTERS=2000
 
-export PASSPHRASE="Public Global Kin Ecosystem Network ; June 2018"
-export PASSPHRASE="Kin Playground Network ; June 2018"
-export PASSPHRASE="Kin Scaling ; March 2019"
-export PASSPHRASE="PerfNet"
 
-export HORIZON=https://horizon-testnet.kininfrastructure.com
-export HORIZON=https://horizon-ecosystem.kininfrastructure.com
-export HORIZON=http://horizon-playground.kininfrastructure.com
-export HORIZON=http://3.91.8.73:8000
-export HORIZON=http://perf-test-alb-horizon-1-1455797395.us-west-1.elb.amazonaws.com
+export PASSPHRASE="Kin test ; Jul 2019"
+export HORIZON=https://horizon-testnet.kin.org/
+
+#CORE_SERVERS="perf-1 perf-2 perf-3 perf-4 perf-5 perf-6 perf-7 perf-8 perf-9 perf-10 perf-11"
+CORE_SERVERS="ip-10-100-112-248.ec2.internal ip-10-100-116-50.ec2.internal ip-10-100-116-96.ec2.internal ip-10-100-116-205.ec2.internal"
+S3_BUCKET_NAME="perf-test-s3-logs"
+
+export FUNDER_SEED=xxx
+export CHANNEL_SEED=yyy
