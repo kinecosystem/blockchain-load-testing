@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 
 . vars.sh
 
@@ -39,7 +40,7 @@ echo -n "Running test on: `date`"
 L2=`curl -s "$HORIZON/ledgers?limit=1&order=desc" | grep -oP 'sequence": \K\d+'`
 
 echo -n "Finished at: `date`"
-
+echo
 echo "Gathering logs."
 
 ./scripts/perf-logs.sh $L1 $L2
@@ -54,20 +55,23 @@ a=$(wc -l perf-tx-ledgers.txt | cut -d" " -f 1)
 cat perf-tx-ledgers.txt | tail -n $(($a - 2)) | head -n $(($a - 2 - 2)) > perf-tx-ledgers.txt2
 mv perf-tx-ledgers.txt2 perf-tx-ledgers.txt
 
+#Extrat Horizon domain from vars.sh>Horizon URL
+HORIZON_DOMAIN=$(echo "$HORIZON" | awk -F/ '{print $3}')
+
 awk -F'|' -f $SCRIPT_DIR/tx_ledger.awk perf-tx-ledgers.txt > tx-ledgers.sql
-cat tx-ledgers.sql | ssh perf-horizon 'psql -h perf-horizon-1.c3ofnhfeeiwz.us-west-1.rds.amazonaws.com -U stellar analytics' > /dev/null 2>&1
+cat tx-ledgers.sql | ssh -i ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
 
 cat perf-horizon-ingest.log | . $SCRIPT_DIR/ingestion.sh > ingestion.sql
-cat ingestion.sql | ssh perf-horizon 'psql -h perf-horizon-1.c3ofnhfeeiwz.us-west-1.rds.amazonaws.com -U stellar analytics' > /dev/null 2>&1
+cat ingestion.sql | ssh -i ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
 
 grep "submitting" loadtest-$L1-$L2.log | jq -rc ".tx_hash, .timestamp" | awk -f $SCRIPT_DIR/submission.awk | paste -sd ",\n" | while read -r line; do echo "insert into submission values($line);"; done > submission.sql
-cat submission.sql | ssh perf-horizon 'psql -h perf-horizon-1.c3ofnhfeeiwz.us-west-1.rds.amazonaws.com -U stellar analytics' > /dev/null 2>&1
+cat submission.sql | ssh -i ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
 
 if [ -e core.sql ]; then rm core.sql; fi
-for file in `ls perf*$L1-$L2-log.json.gz`; do
-	$SCRIPT_DIR/core_stats.sh $file >> core.sql
+for file in $CORE_SERVERS; do
+	$SCRIPT_DIR/core_stats.sh $file-$L1-$L2-log.json.gz >> core.sql
 done
-cat core.sql | ssh perf-horizon 'psql -h perf-horizon-1.c3ofnhfeeiwz.us-west-1.rds.amazonaws.com -U stellar analytics' > /dev/null 2>&1
+cat core.sql | ssh -i ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
 
 gzip loadtest-$L1-$L2.log
 gzip -f perf-tx-ledgers.txt
