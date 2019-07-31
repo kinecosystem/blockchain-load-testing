@@ -59,19 +59,19 @@ mv perf-tx-ledgers.txt2 perf-tx-ledgers.txt
 HORIZON_DOMAIN=$(echo "$HORIZON" | awk -F/ '{print $3}')
 
 awk -F'|' -f $SCRIPT_DIR/tx_ledger.awk perf-tx-ledgers.txt > tx-ledgers.sql
-cat tx-ledgers.sql | ssh -i ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
+cat tx-ledgers.sql | ssh -i $SSH_KEY ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
 
 cat perf-horizon-ingest.log | . $SCRIPT_DIR/ingestion.sh > ingestion.sql
-cat ingestion.sql | ssh -i ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
+cat ingestion.sql | ssh -i $SSH_KEY ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
 
 grep "submitting" loadtest-$L1-$L2.log | jq -rc ".tx_hash, .timestamp" | awk -f $SCRIPT_DIR/submission.awk | paste -sd ",\n" | while read -r line; do echo "insert into submission values($line);"; done > submission.sql
-cat submission.sql | ssh -i ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
+cat submission.sql | ssh -i $SSH_KEY ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
 
 if [ -e core.sql ]; then rm core.sql; fi
 for file in $CORE_SERVERS; do
 	$SCRIPT_DIR/core_stats.sh $file-$L1-$L2-log.json.gz >> core.sql
 done
-cat core.sql | ssh -i ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
+cat core.sql | ssh -i $SSH_KEY ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
 
 gzip loadtest-$L1-$L2.log
 gzip -f perf-tx-ledgers.txt
