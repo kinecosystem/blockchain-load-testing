@@ -82,7 +82,7 @@ gzip -f submission.sql
 gzip -f core.sql
 
 TAR=logs-$L1-$L2.$TIME_LENGTH.$RATE.horizon.tar
-tar cvf $TAR perf*$L1-$L2* loadtest-$L1-$L2.log.gz test-params perf-tx-ledgers.txt.gz perf-horizon-ingest.log.gz *.sql.gz 
+tar cvf $TAR ip-core-test-*.test.kin-$L1-$L2* loadtest-$L1-$L2.log.gz test-params perf-tx-ledgers.txt.gz perf-horizon-ingest.log.gz *.sql.gz
 aws s3api --no-sign-request put-object --bucket perf-test-s3-logs --key $TAR --body $TAR
 popd
 
