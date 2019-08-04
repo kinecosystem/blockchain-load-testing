@@ -1,0 +1,132 @@
+pipeline {
+    agent any
+    //parameters for the build
+    parameters {
+        //parameters for the environment creation
+        string(name: 'TERRAFORM_BRANCH', defaultValue: '', description: 'Create environment version/branch')
+
+        choice(name: 'AWS_REGION', choices: ['us-east-1'],  description: 'Choose the region to deploy the network')
+        choice(name: 'ACTION', choices: ['terraform apply', 'terraform destroy'],  description: 'Terraform')
+
+        string(name: 'Core_1_AMI', defaultValue: 'ami-06aa0a01d289e025e', description: 'Core AMI')
+        string(name: 'Core_2_AMI', defaultValue: 'ami-026fedbbacb6e35f4', description: 'Core AMI')
+        string(name: 'Core_3_AMI', defaultValue: 'ami-0d08632fc8e34d3a0', description: 'Core AMI')
+        string(name: 'Core_4_AMI', defaultValue: 'ami-0111ad1f91718b63f', description: 'Core AMI')
+        string(name: 'Core_5_AMI', defaultValue: 'ami-07415f0e195ef2ea4', description: 'Core AMI')
+        string(name: 'Horizon_1_AMI', defaultValue: 'ami-0752ca2cd8405d12e', description: 'Horizon 1 AMI')
+        string(name: 'test_load_client_AMI', defaultValue: 'ami-0f38a2d9e036ded9e', description: 'Load Test client AMI')
+        string(name: 'Prometheus_AMI', defaultValue: 'ami-0096cd1e99da3dfb9', description: 'Prometheus AMI')
+        string(name: 'test_watcher_core_1_ami', defaultValue: 'ami-0023e946265a2f4d5', description: 'Prometheus AMI')
+        string(name: 'SUF', defaultValue: 'sf42', description: 'Suffix for Environment (Id)')
+        string(name: 'VPC_PREFIX', defaultValue: '172.34', description: 'Choose CIDR Block for VPC')
+
+
+        //parameters for the load test
+        string(name: 'TEST_RUNNER', defaultValue: '', description: 'Load Test client \n(leave empty to use the IP generated in in the environment creation)')
+        string(name: 'VARS', defaultValue: '', description: 'variables for the load tests (appends to existing variables) \nExample: \n export FUNDER_SEED=xxx \n export CHANNEL_SEED=yyy')
+        string(name: 'BRANCH', defaultValue: 'multiple_horizons', description: 'stellar-load-testing version/branch')
+
+
+    }
+    stages {
+        stage('Checkout latest test environment code') {
+            steps{
+                echo "checking out terraform environment builder - $TERRAFORM_BRANCH "
+            }
+        }
+        stage('Create test environment') {
+            steps{
+                echo "Building environment"
+                sh '''
+                    #debug: PS4=':$BASH_SOURCE:$LINENO+'; set -x
+                    echo "1234" > /tmp/test-client-ip-$SUF
+
+                '''
+                //set the test client IP
+                script {
+                    TEST_RUNNER=env.TEST_RUNNER
+                    if (!env.TEST_RUNNER){
+                       env.TEST_RUNNER=sh(script: "cat /tmp/test-client-ip-${SUF}", returnStdout: true).trim()
+                    }
+                }
+            }
+        }
+        stage ('Backup remote environment'){
+            steps {
+                // skip ssh key verification
+                // don't fail if folder doesn't exists
+                sh '''
+                    ssh -o "StrictHostKeyChecking=no" -i $SSH_KEY ubuntu@$TEST_RUNNER "mv ~/stellar-load-testing stellar-load-testing-`date +"%d-%m-%Y_%H-%M"` || true"
+                '''
+                }
+        }
+        stage ('Checkout code remotely'){
+            steps {
+                echo "Checking out stellar-load-testing  -> ${BRANCH} on test runner machine"
+                sh '''
+                    ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "git clone -b ${BRANCH} https://github.com/kinecosystem/stellar-load-testing.git"
+                '''
+            }
+        }
+        stage('Setup') {
+            parallel {
+                stage('Copy ssh key to test runner (for reports and logs)') {
+                    steps {
+                        echo "Copying keys"
+                        sh '''
+                            SSH_NAME=$(basename $SSH_KEY)
+                            rm -rf "${SSH_KEY%.*}2.pem" || true
+                            cp $SSH_KEY "${SSH_KEY%.*}2.pem"
+                            chmod 775 "${SSH_KEY%.*}2.pem"
+                            ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "rm -rf ~/.ssh/$SSH_NAME"
+                            scp -i $SSH_KEY "${SSH_KEY%.*}2.pem" ubuntu@$TEST_RUNNER:~/.ssh/$SSH_NAME
+                            ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "chmod 400 ~/.ssh/$SSH_NAME; echo 'export SSH_KEY=~/.ssh/$SSH_NAME'>>~/stellar-load-testing/vars.sh"
+                            rm -rf "${SSH_KEY%.*}2.pem"
+                        '''
+                    }
+                }
+                stage('Copy resources') {
+                    steps {
+                        sh '''
+                            ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "cp  ~/stellar-load-testing/resources/* ~/stellar-load-testing/"
+                        '''
+                    }
+                }
+                stage('Copy variables (if exist) to test runner') {
+                    steps {
+                        sh '''
+                            [  -z "$VARS" ] && echo "Using project default vars.sh file" || ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo '${vars}' >> ~/stellar-load-testing/vars.sh"
+                            ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "chmod 775 ~/stellar-load-testing/vars.sh"
+                        '''
+                    }
+                }
+                //end of parallel setup
+            }
+        }
+        stage('Prepare accounts') {
+                steps {
+                    echo "preparing accounts"
+                    sh '''
+                        ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "cd ~/stellar-load-testing/cmd/python; ./prepare_accounts.sh "
+                    '''
+                }
+        }
+        stage ('Run tests'){
+                steps {
+                    echo 'Running load tests'
+                    sh '''
+                       ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "cd ~/stellar-load-testing; ./scripts/perf.sh"
+                    '''
+                }
+        }
+        stage ('Collecting results'){
+                steps {
+                    echo 'Collecting results'
+                    sh '''
+
+                    '''
+                }
+        }
+
+    }
+}

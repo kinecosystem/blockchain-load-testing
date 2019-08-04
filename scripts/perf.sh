@@ -68,9 +68,11 @@ grep "submitting" loadtest-$L1-$L2.log | jq -rc ".tx_hash, .timestamp" | awk -f 
 cat submission.sql | ssh -i $SSH_KEY ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
 
 if [ -e core.sql ]; then rm core.sql; fi
+
 for file in $CORE_SERVERS; do
 	$SCRIPT_DIR/core_stats.sh $file-$L1-$L2-log.json.gz >> core.sql
 done
+
 cat core.sql | ssh -i $SSH_KEY ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
 
 gzip loadtest-$L1-$L2.log
