@@ -3,7 +3,7 @@ pipeline {
     //parameters for the build
     parameters {
         //parameters for the environment creation
-        string(name: 'TERRAFORM_BRANCH', defaultValue: '', description: 'Create environment version/branch')
+        string(name: 'TERRAFORM_BRANCH', defaultValue: 'master', description: 'Create environment version/branch')
 
         choice(name: 'AWS_REGION', choices: ['us-east-1'],  description: 'Choose the region to deploy the network')
         choice(name: 'ACTION', choices: ['terraform apply', 'terraform destroy'],  description: 'Terraform')
@@ -22,6 +22,7 @@ pipeline {
 
 
         //parameters for the load test
+        string(name: 'TEST_NAME', defaultValue: 'Current date', description: 'Load Test name')
         string(name: 'TEST_RUNNER', defaultValue: '', description: 'Load Test client \n(leave empty to use the IP generated in in the environment creation)')
         string(name: 'VARS', defaultValue: '', description: 'variables for the load tests (appends to existing variables) \nExample: \n export FUNDER_SEED=xxx \n export CHANNEL_SEED=yyy')
         string(name: 'BRANCH', defaultValue: 'multiple_horizons', description: 'stellar-load-testing version/branch')
@@ -32,21 +33,34 @@ pipeline {
         stage('Checkout latest test environment code') {
             steps{
                 echo "checking out terraform environment builder - $TERRAFORM_BRANCH "
+                sh '''
+                    git clone -b ${$TERRAFORM_BRANCH} https://github.com/kinecosystem/Blockchain-configuration-terraform.git terraform
+                '''
+
             }
         }
         stage('Create test environment') {
             steps{
                 echo "Building environment"
+                //debug: PS4=':$BASH_SOURCE:$LINENO+'; set -x
+                //expects ./scripts/jenkins-configuration.sh to export the client IP to /tmp/test-client-ip-${SUF} file
+                //or override this if provided from jenkins
                 sh '''
-                    #debug: PS4=':$BASH_SOURCE:$LINENO+'; set -x
-                    echo "1234" > /tmp/test-client-ip-$SUF
-
+                    cd terraform
+                    ./scripts/jenkins-configuration.sh
                 '''
                 //set the test client IP
                 script {
                     TEST_RUNNER=env.TEST_RUNNER
                     if (!env.TEST_RUNNER){
                        env.TEST_RUNNER=sh(script: "cat /tmp/test-client-ip-${SUF}", returnStdout: true).trim()
+                    }
+                }
+                //set the test name
+                script {
+                    TEST_NAME=env.TEST_NAME
+                    if (!env.TEST_NAME){
+                       env.TEST_NAME=sh(script: "date "+%d-%m-%Y__%H-%M"", returnStdout: true).trim()
                     }
                 }
             }
@@ -95,6 +109,7 @@ pipeline {
                 stage('Copy variables (if exist) to test runner') {
                     steps {
                         sh '''
+                            ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo 'Test name=${TEST_NAME}'' >> ~/stellar-load-testing/vars.sh
                             [  -z "$VARS" ] && echo "Using project default vars.sh file" || ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo '${vars}' >> ~/stellar-load-testing/vars.sh"
                             ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "chmod 775 ~/stellar-load-testing/vars.sh"
                         '''
