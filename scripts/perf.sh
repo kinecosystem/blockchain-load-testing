@@ -29,6 +29,9 @@ cat <<EOF > /tmp/test-params
 ops/tx: $OPS_PER_TX
 duration: $TIME_LENGTH
 rate: $RATE
+submitters: $SUBMITTERS
+repetitions: $REPETITIONS
+test-name: $TEST_NAME
 EOF
 
 L1=`curl -s "$HORIZON/ledgers?limit=1&order=desc" | grep -oP 'sequence": \K\d+'`

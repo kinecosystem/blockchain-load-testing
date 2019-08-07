@@ -27,13 +27,20 @@ CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 -- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: -
 --
 
-*/COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';*/
+/* COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';*/
 
 
 SET default_tablespace = '';
 
 SET default_with_oids = false;
 
+CREATE TABLE IF NOT EXISTS public.test_meta_data (
+    node character varying(5),
+    "timestamp" timestamp without time zone,
+    test_name TEXT    NOT NULL,
+    values TEXT    NOT NULL,
+
+);
 --
 -- Name: ledger_db_end; Type: TABLE; Schema: public; Owner: -
 --
@@ -217,7 +224,7 @@ CREATE INDEX "ledger_vote_start.sequence" ON public.ledger_vote_start USING btre
 
 REVOKE ALL ON SCHEMA public FROM rdsadmin;
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
-*/GRANT ALL ON SCHEMA public TO stellar;*/
+/* GRANT ALL ON SCHEMA public TO stellar;*/
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
 

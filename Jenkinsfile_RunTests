@@ -5,20 +5,6 @@ pipeline {
         //parameters for the environment creation
         string(name: 'TERRAFORM_BRANCH', defaultValue: 'master', description: 'Create environment version/branch')
 
-        choice(name: 'AWS_REGION', choices: ['us-east-1'],  description: 'Choose the region to deploy the network')
-        choice(name: 'ACTION', choices: ['terraform apply', 'terraform destroy'],  description: 'Terraform')
-
-        string(name: 'Core_1_AMI', defaultValue: 'ami-06aa0a01d289e025e', description: 'Core AMI')
-        string(name: 'Core_2_AMI', defaultValue: 'ami-026fedbbacb6e35f4', description: 'Core AMI')
-        string(name: 'Core_3_AMI', defaultValue: 'ami-0d08632fc8e34d3a0', description: 'Core AMI')
-        string(name: 'Core_4_AMI', defaultValue: 'ami-0111ad1f91718b63f', description: 'Core AMI')
-        string(name: 'Core_5_AMI', defaultValue: 'ami-07415f0e195ef2ea4', description: 'Core AMI')
-        string(name: 'Horizon_1_AMI', defaultValue: 'ami-0752ca2cd8405d12e', description: 'Horizon 1 AMI')
-        string(name: 'test_load_client_AMI', defaultValue: 'ami-0f38a2d9e036ded9e', description: 'Load Test client AMI')
-        string(name: 'Prometheus_AMI', defaultValue: 'ami-0096cd1e99da3dfb9', description: 'Prometheus AMI')
-        string(name: 'test_watcher_core_1_ami', defaultValue: 'ami-0023e946265a2f4d5', description: 'Prometheus AMI')
-        string(name: 'SUF', defaultValue: 'sf42', description: 'Suffix for Environment (Id)')
-        string(name: 'VPC_PREFIX', defaultValue: '172.34', description: 'Choose CIDR Block for VPC')
 
 
         //parameters for the load test
@@ -26,29 +12,15 @@ pipeline {
         string(name: 'TEST_RUNNER', defaultValue: '', description: 'Load Test client \n(leave empty to use the IP generated in in the environment creation)')
         string(name: 'VARS', defaultValue: '', description: 'variables for the load tests (appends to existing variables) \nExample: \n export FUNDER_SEED=xxx \n export CHANNEL_SEED=yyy')
         string(name: 'BRANCH', defaultValue: 'multiple_horizons', description: 'stellar-load-testing version/branch')
+        string(name: 'SSH_KEY', defaultValue: '/var/jenkins_home/default-init-key.pem', description: 'SSH key to the environment')
 
 
     }
     stages {
-        stage('Checkout latest test environment code') {
-            steps{
-                echo "checking out terraform environment builder - $TERRAFORM_BRANCH "
-                sh '''
-                    git clone -b ${$TERRAFORM_BRANCH} https://github.com/kinecosystem/Blockchain-configuration-terraform.git terraform
-                '''
 
-            }
-        }
         stage('Create test environment') {
             steps{
-                echo "Building environment"
-                //debug: PS4=':$BASH_SOURCE:$LINENO+'; set -x
-                //expects ./scripts/jenkins-configuration.sh to export the client IP to /tmp/test-client-ip-${SUF} file
-                //or override this if provided from jenkins
-                sh '''
-                    cd terraform
-                    ./scripts/jenkins-configuration.sh
-                '''
+
                 //set the test client IP
                 script {
                     TEST_RUNNER=env.TEST_RUNNER
@@ -60,7 +32,7 @@ pipeline {
                 script {
                     TEST_NAME=env.TEST_NAME
                     if (!env.TEST_NAME){
-                       env.TEST_NAME=sh(script: "date "+%d-%m-%Y__%H-%M"", returnStdout: true).trim()
+                       env.TEST_NAME=sh(script: "date '+%d-%m-%Y__%H-%M'", returnStdout: true).trim()
                     }
                 }
             }
@@ -109,19 +81,25 @@ pipeline {
                 stage('Copy variables (if exist) to test runner') {
                     steps {
                         sh '''
-                            ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo 'Test_Name=${TEST_NAME}'' >> ~/stellar-load-testing/vars.sh
-                            withCredentials([string(credentialsId: 'ANALYTICS_DB', variable: 'ANALYTICS_DB_VAR')]) {
-                                ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo 'ANALYTICS_DB=${ANALYTICS_DB_VAR}'' >> ~/stellar-load-testing/vars.sh
-                            }
-                            withCredentials([string(credentialsId: 'ANALYTICS_DB_USER', variable: 'ANALYTICS_DB_USER_VAR')]) {
-                                ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo 'ANALYTICS_DB_USER=${ANALYTICS_DB_USER_VAR}'' >> ~/stellar-load-testing/vars.sh
-                            }
-                            withCredentials([string(credentialsId: 'ANALYTICS_PASS', variable: 'ANALYTICS_PASS_VAR')]) {
-                                ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo 'ANALYTICS_DB=${ANALYTICS_PASS_VAR}'' >> ~/stellar-load-testing/vars.sh
-                            }
+                            ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo 'TEST_NAME=${TEST_NAME}' >> ~/stellar-load-testing/vars.sh"
                             [  -z "$VARS" ] && echo "Using project default vars.sh file" || ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo '${vars}' >> ~/stellar-load-testing/vars.sh"
                             ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "chmod 775 ~/stellar-load-testing/vars.sh"
                         '''
+                        withCredentials([string(credentialsId: 'ANALYTICS_DB', variable: 'ANALYTICS_DB_VAR')]) {
+                            sh '''
+                                ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo 'ANALYTICS_DB=${ANALYTICS_DB_VAR}' >> ~/stellar-load-testing/vars.sh"
+                            '''
+                        }
+                        withCredentials([string(credentialsId: 'ANALYTICS_DB_USER', variable: 'ANALYTICS_DB_USER_VAR')]) {
+                            sh '''
+                                ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo 'ANALYTICS_DB_USER=${ANALYTICS_DB_USER_VAR}' >> ~/stellar-load-testing/vars.sh"
+                            '''
+                        }
+                        withCredentials([string(credentialsId: 'ANALYTICS_PASS', variable: 'ANALYTICS_PASS_VAR')]) {
+                            sh '''
+                                ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo 'ANALYTICS_PASS=${ANALYTICS_PASS_VAR}' >> ~/stellar-load-testing/vars.sh"
+                             '''
+                        }
                     }
                 }
                 //end of parallel setup
