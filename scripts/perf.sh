@@ -15,7 +15,7 @@ fi
 
 #Repetitions
 if [ -z "$2" ]
-then
+thenTE
       echo "\$2 is empty, using value from vars.sh"
 else
       export REPETITIONS=$2
@@ -55,17 +55,27 @@ a=$(wc -l perf-tx-ledgers.txt | cut -d" " -f 1)
 cat perf-tx-ledgers.txt | tail -n $(($a - 2)) | head -n $(($a - 2 - 2)) > perf-tx-ledgers.txt2
 mv perf-tx-ledgers.txt2 perf-tx-ledgers.txt
 
-#Extrat Horizon domain from vars.sh>Horizon URL
-HORIZON_DOMAIN=$(echo "$HORIZON" | awk -F/ '{print $3}')
+#use psql without passsword
+export PGPASSWORD=$ANALYTICS_PASS
+#Create test DB
+psql --username=$ANALYTICS_DB_USER  --host=$ANALYTICS_DB --dbname=postgres --command="create database $TEST_NAME;"
+#create analytics tables
+psql --username=$ANALYTICS_DB_USER  --host=$ANALYTICS_DB --dbname=$TEST_NAME < $SCRIPT_DIR/create_analytics_db.sql
+#todo: upload test configuration to db
+
 
 awk -F'|' -f $SCRIPT_DIR/tx_ledger.awk perf-tx-ledgers.txt > tx-ledgers.sql
-cat tx-ledgers.sql | ssh -i $SSH_KEY ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
+#cat tx-ledgers.sql | ssh -i $SSH_KEY ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
+psql --username=$ANALYTICS_DB_USER  --host=$ANALYTICS_DB --dbname=$TEST_NAME < tx-ledgers.sql > /dev/null 2>&1
 
 cat perf-horizon-ingest.log | . $SCRIPT_DIR/ingestion.sh > ingestion.sql
-cat ingestion.sql | ssh -i $SSH_KEY ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
+#cat ingestion.sql | ssh -i $SSH_KEY ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
+psql --username=$ANALYTICS_DB_USER  --host=$ANALYTICS_DB --dbname=$TEST_NAME < ingestion.sql
+
 
 grep "submitting" loadtest-$L1-$L2.log | jq -rc ".tx_hash, .timestamp" | awk -f $SCRIPT_DIR/submission.awk | paste -sd ",\n" | while read -r line; do echo "insert into submission values($line);"; done > submission.sql
-cat submission.sql | ssh -i $SSH_KEY ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
+#cat submission.sql bmission.sql | ssh -i $SSH_KEY ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
+psql --username=$ANALYTICS_DB_USER  --host=$ANALYTICS_DB --dbname=$TEST_NAME < submission.sql
 
 if [ -e core.sql ]; then rm core.sql; fi
 
@@ -73,8 +83,11 @@ for file in $CORE_SERVERS; do
 	$SCRIPT_DIR/core_stats.sh $file-$L1-$L2-log.json.gz >> core.sql
 done
 
-cat core.sql | ssh -i $SSH_KEY ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
+#cat core.sql | ssh -i $SSH_KEY ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
+psql --username=$ANALYTICS_DB_USER  --host=$ANALYTICS_DB --dbname=$TEST_NAME < core.sql
 
+
+#Cleanup
 gzip loadtest-$L1-$L2.log
 gzip -f perf-tx-ledgers.txt
 gzip -f perf-horizon-ingest.log

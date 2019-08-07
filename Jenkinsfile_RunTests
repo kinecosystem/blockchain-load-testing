@@ -109,7 +109,16 @@ pipeline {
                 stage('Copy variables (if exist) to test runner') {
                     steps {
                         sh '''
-                            ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo 'Test name=${TEST_NAME}'' >> ~/stellar-load-testing/vars.sh
+                            ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo 'Test_Name=${TEST_NAME}'' >> ~/stellar-load-testing/vars.sh
+                            withCredentials([string(credentialsId: 'ANALYTICS_DB', variable: 'ANALYTICS_DB_VAR')]) {
+                                ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo 'ANALYTICS_DB=${ANALYTICS_DB_VAR}'' >> ~/stellar-load-testing/vars.sh
+                            }
+                            withCredentials([string(credentialsId: 'ANALYTICS_DB_USER', variable: 'ANALYTICS_DB_USER_VAR')]) {
+                                ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo 'ANALYTICS_DB_USER=${ANALYTICS_DB_USER_VAR}'' >> ~/stellar-load-testing/vars.sh
+                            }
+                            withCredentials([string(credentialsId: 'ANALYTICS_PASS', variable: 'ANALYTICS_PASS_VAR')]) {
+                                ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo 'ANALYTICS_DB=${ANALYTICS_PASS_VAR}'' >> ~/stellar-load-testing/vars.sh
+                            }
                             [  -z "$VARS" ] && echo "Using project default vars.sh file" || ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo '${vars}' >> ~/stellar-load-testing/vars.sh"
                             ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "chmod 775 ~/stellar-load-testing/vars.sh"
                         '''

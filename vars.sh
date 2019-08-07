@@ -17,6 +17,9 @@ export OPS_PER_TX=1
 #less than or equal to the AMOUNT_OF_SOURCE_ACCOUNTS
 export SUBMITTERS=100
 
+export SCRIPT_DIR=~/stellar-load-testing/scripts
+
+
 export CORE_SERVERS="ip-core-test-1.test.kin ip-core-test-2.test.kin  ip-core-test-3.test.kin ip-core-test-4.test.kin ip-core-test-5.test.kin"
 export HORIZON=http://ip-horizon-test-1.test.kin
 
@@ -29,4 +32,5 @@ export PASSPHRASE="Kin test ; Jul 2019"
 export FUNDER_SEED=SCEIO4XV4UFZEVFAWOWCSXUA32LKLKG5MLJ5R7FVCGVSLFTIHP3A35E7
 export CHANNEL_SEED=SCEIO4XV4UFZEVFAWOWCSXUA32LKLKG5MLJ5R7FVCGVSLFTIHP3A35E7
 
-export SCRIPT_DIR=~/stellar-load-testing/scripts
+
+
