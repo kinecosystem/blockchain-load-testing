@@ -15,7 +15,7 @@ fi
 
 #Repetitions
 if [ -z "$2" ]
-thenTE
+then
       echo "\$2 is empty, using value from vars.sh"
 else
       export REPETITIONS=$2
