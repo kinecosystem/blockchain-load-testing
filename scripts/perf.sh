@@ -21,7 +21,7 @@ else
       export REPETITIONS=$2
 fi
 
-TEST_NAME=$TEST_NAME"_"`date '+%d-%m-%Y__%H-%M'`
+TEST_NAME=$TEST_NAME"_"`date '+%d_%m_%Y__%H_%M'`
 echo "test name: $TEST_NAME"
 
 for (( i=1; i<=$REPETITIONS; i++ )); do
@@ -103,9 +103,9 @@ gzip -f ingestion.sql
 gzip -f submission.sql
 gzip -f core.sql
 
-TAR=$TEST_NAME_logs-$L1-$L2.$TIME_LENGTH.$RATE.tar
-tar cvf $TAR ip-core-test-* loadtest-$L1-$L2.log.gz test-params perf-tx-ledgers.txt.gz perf-horizon-ingest.log.gz *.sql.gz
-aws s3api --no-sign-request put-object --bucket perf-test-s3-logs --key $TAR --body $TAR
+TAR=$TEST_NAME.tar
+tar cvf $TAR ip-core-test-* loadtest-$L1-$L2.log.gz test-params perf-tx-ledgers.txt.gz perf-horizon-ingest.log.gz *.sql.gz prometheus.tar.gz
+aws s3api --no-sign-request put-object --bucket $S3_BUCKET --key $TAR --body $TAR
 popd
 
 done

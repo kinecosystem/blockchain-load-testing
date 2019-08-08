@@ -22,9 +22,9 @@ export SCRIPT_DIR=~/stellar-load-testing/scripts
 
 export CORE_SERVERS="ip-core-test-1.test.kin ip-core-test-2.test.kin  ip-core-test-3.test.kin ip-core-test-4.test.kin ip-core-test-5.test.kin"
 export HORIZON=http://ip-horizon-test-1.test.kin
+export PROMETHEUS=ip-prometheus_server-test-1.test.kin
 
-
-export S3_BUCKET_NAME="perf-test-s3-logs"
+export S3_BUCKET="perf-test-s3-logs"
 
 export PASSPHRASE="Kin test ; Jul 2019"
 

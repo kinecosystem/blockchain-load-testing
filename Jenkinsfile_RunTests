@@ -35,9 +35,6 @@ pipeline {
                 //       env.TEST_NAME=sh(script: "date '+%d-%m-%Y__%H-%M'", returnStdout: true).trim()
                 //    }
                 //}
-                sh '''
-                  TEST_NAME=$TEST_NAME"_"`date '+%d-%m-%Y__%H-%M'`
-                '''
             }
         }
         stage ('Backup remote environment'){

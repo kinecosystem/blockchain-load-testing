@@ -19,6 +19,9 @@ ssh  -o "StrictHostKeyChecking=no"  -i $SSH_KEY ubuntu@$HORIZON_DOMAIN  "sudo do
 ssh -i $SSH_KEY ubuntu@$HORIZON_DOMAIN  "sudo su -c 'docker logs horizon   2> /tmp/a'; grep \"Finished ingesting ledgers\" /tmp/a "  | tail -300 > /tmp/perf-horizon-ingest.log
 
 
-
+#Backup Prometheus data folder
+echo "Backup Prometheus data folder"
+ssh -o "StrictHostKeyChecking=no" -i $SSH_KEY ubuntu@$PROMETHEUS "tar -zcvf prometheus.tar.gz /data/prometheus/data" && \
+scp -o "StrictHostKeyChecking=no" -i $SSH_KEY ubuntu@$PROMETHEUS:prometheus.tar.gz /tmp/
 wait
 exit 0
