@@ -21,7 +21,8 @@ else
       export REPETITIONS=$2
 fi
 
-
+TEST_NAME=$TEST_NAME"_"`date '+%d-%m-%Y__%H-%M'`
+echo "test name: $TEST_NAME"
 
 for (( i=1; i<=$REPETITIONS; i++ )); do
 #todo: branch name
