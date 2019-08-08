@@ -24,7 +24,7 @@ fi
 
 
 for (( i=1; i<=$REPETITIONS; i++ )); do
-
+#todo: branch name
 cat <<EOF > /tmp/test-params
 insert into test_meta_data values(
 now(),
@@ -34,7 +34,7 @@ duration: $TIME_LENGTH
 rate: $RATE
 submitters: $SUBMITTERS
 repetitions: $REPETITIONS
-test-name: $TEST_NAME')
+')
 EOF
 
 L1=`curl -s "$HORIZON/ledgers?limit=1&order=desc" | grep -oP 'sequence": \K\d+'`
@@ -67,8 +67,8 @@ export PGPASSWORD=$ANALYTICS_PASS
 psql --username=$ANALYTICS_DB_USER  --host=$ANALYTICS_DB --dbname=postgres --command="create database $TEST_NAME;"
 #create analytics tables
 psql --username=$ANALYTICS_DB_USER  --host=$ANALYTICS_DB --dbname=$TEST_NAME < $SCRIPT_DIR/create_analytics_db.sql
-#todo: upload test configuration to db
-
+#upload test configuration to db
+psql --username=$ANALYTICS_DB_USER  --host=$ANALYTICS_DB --dbname=$TEST_NAME <  test-params > /dev/null 2>&1
 
 awk -F'|' -f $SCRIPT_DIR/tx_ledger.awk perf-tx-ledgers.txt > tx-ledgers.sql
 #cat tx-ledgers.sql | ssh -i $SSH_KEY ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
@@ -102,8 +102,8 @@ gzip -f ingestion.sql
 gzip -f submission.sql
 gzip -f core.sql
 
-TAR=logs-$L1-$L2.$TIME_LENGTH.$RATE.horizon.tar
-tar cvf $TAR ip-core-test-*.test.kin-$L1-$L2* loadtest-$L1-$L2.log.gz test-params perf-tx-ledgers.txt.gz perf-horizon-ingest.log.gz *.sql.gz
+TAR=$TEST_NAME_logs-$L1-$L2.$TIME_LENGTH.$RATE.tar
+tar cvf $TAR ip-core-test-* loadtest-$L1-$L2.log.gz test-params perf-tx-ledgers.txt.gz perf-horizon-ingest.log.gz *.sql.gz
 aws s3api --no-sign-request put-object --bucket perf-test-s3-logs --key $TAR --body $TAR
 popd
 

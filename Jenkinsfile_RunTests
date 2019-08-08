@@ -7,7 +7,7 @@ pipeline {
 
 
         //parameters for the load test
-        string(name: 'TEST_NAME', defaultValue: 'Current date', description: 'Load Test name')
+        string(name: 'TEST_NAME', defaultValue: '', description: 'Load Test name')
         string(name: 'TEST_RUNNER', defaultValue: '', description: 'Load Test client \n(leave empty to use the IP generated in in the environment creation)')
         string(name: 'VARS', defaultValue: '', description: 'variables for the load tests (appends to existing variables) \nExample: \n export FUNDER_SEED=xxx \n export CHANNEL_SEED=yyy')
         string(name: 'BRANCH', defaultValue: 'multiple_horizons', description: 'stellar-load-testing version/branch')
@@ -28,12 +28,16 @@ pipeline {
                     }
                 }
                 //set the test name
-                script {
-                    TEST_NAME=env.TEST_NAME
-                    if (!env.TEST_NAME){
-                       env.TEST_NAME=sh(script: "date '+%d-%m-%Y__%H-%M'", returnStdout: true).trim()
-                    }
-                }
+                //script {
+                //    TEST_NAME=env.TEST_NAME + "date '+%d-%m-%Y__%H-%M'"
+                //    echo $TEST_NAME
+                //    if (!env.TEST_NAME){
+                //       env.TEST_NAME=sh(script: "date '+%d-%m-%Y__%H-%M'", returnStdout: true).trim()
+                //    }
+                //}
+                sh '''
+                  TEST_NAME=$TEST_NAME"_"`date '+%d-%m-%Y__%H-%M'`
+                '''
             }
         }
         stage ('Backup remote environment'){
