@@ -3,7 +3,6 @@ pipeline {
     //parameters for the build
     parameters {
         //parameters for the environment creation
-        string(name: 'TERRAFORM_BRANCH', defaultValue: 'master', description: 'Create environment version/branch')
 
 
 

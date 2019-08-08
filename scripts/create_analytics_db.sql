@@ -35,10 +35,9 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 CREATE TABLE IF NOT EXISTS public.test_meta_data (
-    node character varying(5),
     "timestamp" timestamp without time zone,
     test_name TEXT    NOT NULL,
-    values TEXT    NOT NULL,
+    values TEXT    NOT NULL
 
 );
 --

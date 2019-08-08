@@ -26,12 +26,15 @@ fi
 for (( i=1; i<=$REPETITIONS; i++ )); do
 
 cat <<EOF > /tmp/test-params
-ops/tx: $OPS_PER_TX
+insert into test_meta_data values(
+now(),
+'$TEST_NAME',
+'ops/tx: $OPS_PER_TX
 duration: $TIME_LENGTH
 rate: $RATE
 submitters: $SUBMITTERS
 repetitions: $REPETITIONS
-test-name: $TEST_NAME
+test-name: $TEST_NAME')
 EOF
 
 L1=`curl -s "$HORIZON/ledgers?limit=1&order=desc" | grep -oP 'sequence": \K\d+'`
