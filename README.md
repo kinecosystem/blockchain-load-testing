@@ -16,10 +16,7 @@ and environment variable:
 Run from /LOCAL_PATH/work/go/src/github.com/kinecosystem/blockchain-load-testing:
 
 ```bash
-# download glide
-make glide
-
-# install dependencies
+# install dependencies, requires go dep
 make vendor
 
 # build binaries
