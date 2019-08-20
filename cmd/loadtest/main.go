@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -25,11 +26,11 @@ import (
 // ClientTimeout is the Horizon HTTP request timeout.
 const ClientTimeout = 120 * time.Second
 
-// Support arrays of string flags
+// Support repeating string flags
 type arrayFlags []string
 
 func (i *arrayFlags) String() string {
-	return "my string representation"
+	return strings.Join((*i)[:], ",")
 }
 
 func (i *arrayFlags) Set(value string) error {
@@ -37,11 +38,10 @@ func (i *arrayFlags) Set(value string) error {
 	return nil
 }
 
-var horizonDomainFlags arrayFlags
-
 var (
 	debugFlag             = flag.Bool("debug", false, "enable debug log level")
 	stellarPassphraseFlag = flag.String("passphrase", "Test SDF Network ; September 2015", "stellar network passphrase")
+	horizonEndpointFlags  arrayFlags
 	logFileFlag           = flag.String("log", "loadtest.log", "log file path")
 	destinationFileFlag   = flag.String("dest", "dest.json", "destination keypairs input file")
 	accountsFileFlag      = flag.String("accounts", "accounts.json", "submitter keypairs input file")
@@ -54,10 +54,12 @@ var (
 	nativeAssetFlag       = flag.Bool("native", true, "set to false to use a non-native asset")
 )
 
+func init() {
+	flag.Var(&horizonEndpointFlags, "", "Horizon address; Flag can be repeated multiple times for submitting to multiple Horizons")
+}
+
 // Run is the main function of this application. It returns a status exit code for main().
 func Run() int {
-	flag.Var(&horizonDomainFlags, "address", "horizon address")
-
 	flag.Parse()
 
 	if *txsPerSecondFlag == 0.0 {
@@ -87,9 +89,9 @@ func Run() int {
 	}
 
 	var clients []horizon.Client
-	for i := 0; i < len(horizonDomainFlags); i++ {
+	for _, endpoint := range horizonEndpointFlags {
 		client := horizon.Client{
-			URL:  horizonDomainFlags[0],
+			URL:  endpoint,
 			HTTP: &http.Client{Timeout: ClientTimeout},
 		}
 
