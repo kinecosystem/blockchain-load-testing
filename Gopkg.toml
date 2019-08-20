@@ -27,7 +27,15 @@
 
 [[constraint]]
   name = "github.com/go-kit/kit"
-  version = "0.6.0"
+  version = "0.9.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/kinecosystem/go"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/time"
 
 [prune]
   go-tests = true
