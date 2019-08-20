@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/stellar/go/keypair"
+	"github.com/kinecosystem/go/keypair"
 )
 
 var seedFlag = flag.String("seed", "", "seed")
