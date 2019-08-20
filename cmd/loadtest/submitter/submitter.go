@@ -146,7 +146,7 @@ func (s *Submitter) submit(logger log.Logger, destIndex int, native bool, client
 			amount = build.CreditAmount{"KIN", "GBSJ7KFU2NXACVHVN2VWQIXIV5FWH6A7OIDDTEUYTCJYGY3FJMYIDTU7", s.transferAmount}
 		}
 
-	        ops = append(ops, build.Payment(build.Destination{AddressOrSeed: s.destinationAddresses[destIndex].Address()}, amount))
+		ops = append(ops, build.Payment(build.Destination{AddressOrSeed: s.destinationAddresses[destIndex].Address()}, amount))
 	}
 
 	txBuilder, err := build.Transaction(ops...)
@@ -196,7 +196,7 @@ func (s *Submitter) submit(logger log.Logger, destIndex int, native bool, client
 		return nil
 	}
 
-        level.Error(logger).Log("msg", err)
+	level.Error(logger).Log("msg", err)
 
 	// Logs errors and set the current sequence number from Horizon instead of local cache
 	// if transaction failed due to bad sequence number.
