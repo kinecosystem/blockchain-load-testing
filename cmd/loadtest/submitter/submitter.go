@@ -21,7 +21,7 @@ import (
 //
 // The transactions always consist of a single payment operation to a predefined destination address.
 type Submitter struct {
-	client  *horizon.Client
+	clients []horizon.Client
 	network build.Network
 
 	sourceSeed,
@@ -43,7 +43,7 @@ type Submitter struct {
 
 // New returns a new Submitter.
 func New(
-	client *horizon.Client,
+	clients []horizon.Client,
 	network build.Network,
 	provider *sequence.Provider,
 	source *keypair.Full,
@@ -52,7 +52,7 @@ func New(
 	opsPerTx int) (*Submitter, error) {
 
 	s := Submitter{
-		client:  client,
+		clients: clients,
 		network: network,
 
 		sourceSeed:           source.Seed(),
@@ -95,11 +95,17 @@ func (s *Submitter) StartSubmission(ctx context.Context, limiter *rate.Limiter, 
 		}
 
 		destIndex := 0
+		clientIndex := 0
 
 		for {
 			destIndex++
 			if destIndex == len(s.destinationAddresses) {
 				destIndex = 0
+			}
+
+			clientIndex++
+			if clientIndex == len(s.clients) {
+				clientIndex = 0
 			}
 
 			if err := limiter.Wait(ctx); err != nil {
@@ -111,7 +117,7 @@ func (s *Submitter) StartSubmission(ctx context.Context, limiter *rate.Limiter, 
 				continue
 			}
 
-			s.submit(logger, destIndex, native)
+			s.submit(logger, destIndex, native, clientIndex)
 		}
 	}()
 }
@@ -120,7 +126,7 @@ func (s *Submitter) StartSubmission(ctx context.Context, limiter *rate.Limiter, 
 // The transaction has the same property on every call:
 // Same source and and desitnation addresses, and same amount.
 // The only property that changes is the sequence number.
-func (s *Submitter) submit(logger log.Logger, destIndex int, native bool) error {
+func (s *Submitter) submit(logger log.Logger, destIndex int, native bool, clientIndex int) error {
 	level.Debug(logger).Log("msg", "building transaction", "ops_per_tx", s.opsPerTx)
 
 	ops := append(
@@ -172,7 +178,7 @@ func (s *Submitter) submit(logger log.Logger, destIndex int, native bool) error 
 	level.Info(logger).Log("msg", "submitting transaction")
 
 	start := time.Now()
-	_, err = s.client.SubmitTransaction(txEnvB64)
+	_, err = s.clients[clientIndex].SubmitTransaction(txEnvB64)
 	duration := time.Since(start)
 	logger = log.With(logger, "response_time", duration, "response_time_nanoseconds", duration.Nanoseconds())
 
@@ -189,6 +195,8 @@ func (s *Submitter) submit(logger log.Logger, destIndex int, native bool) error 
 
 		return nil
 	}
+
+	level.Error(logger).Log("msg", err)
 
 	// Logs errors and set the current sequence number from Horizon instead of local cache
 	// if transaction failed due to bad sequence number.

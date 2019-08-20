@@ -4,9 +4,9 @@
 set -x
 set -e
 
-SUBMITTERS=$1
-if [ "$SUBMITTERS" == "" ]; then
-	SUBMITTERS=0
+RATE=$1
+if [ "$RATE" == "" ]; then
+	RATE=0
 fi
 
 NATIVE=true
@@ -14,9 +14,16 @@ if [ "$2" != "" ]; then
 	NATIVE=$2
 fi
 
+HORIZON1=$HORIZON
+HORIZON2=$HORIZON1
+HORIZON3=$HORIZON1
+HORIZON4=$HORIZON1
+HORIZON5=$HORIZON1
+HORIZON6=$HORIZON1
+HORIZON7=$HORIZON1
+
 DEBUG="${DEBUG:-true}"
-HORIZON="${HORIZON:-http://localhost:8000}"
-PASSPHRASE="${PASSPHRASE:-"private testnet"}"
+PASSPHRASE="${PASSPHRASE:-"Kin Scaling ; March 2019"}"
 LOG="${LOG:-loadtest.log}"
 ACCOUNTS_FILE="${ACCOUNTS_FILE:-accounts.json}"
 TX_AMOUNT="${TX_AMOUNT:-0.0001}"
@@ -27,11 +34,17 @@ BURST="${BURST:-100}"
 
 DEST_ACCOUNT="${DEST_ACCOUNT:-dest.json}"
 
-make build
+
 ./loadtest \
     -native=$NATIVE \
     -debug=$DEBUG \
-    -address $HORIZON \
+    -address $HORIZON1 \
+    -address $HORIZON2 \
+    -address $HORIZON3 \
+    -address $HORIZON4 \
+    -address $HORIZON5 \
+    -address $HORIZON6 \
+    -address $HORIZON7 \
     -passphrase "$PASSPHRASE" \
     -log $LOG \
     -accounts $ACCOUNTS_FILE \

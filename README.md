@@ -9,6 +9,11 @@ it claims it has.
 ## Build
 
 This application was developed using Go 1.9, though earlier versions may work as well.
+Go expects a specific folder formation: /LOCAL_PATH/work/go/src/github.com/kinecosystem
+and environment variable:
+`export GOPATH=/LOCAL_PATH/work/go`
+
+Run from /LOCAL_PATH/work/go/src/github.com/kinfoundation/stellar-load-testing:
 
 ```bash
 # download glide

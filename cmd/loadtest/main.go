@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -25,10 +26,22 @@ import (
 // ClientTimeout is the Horizon HTTP request timeout.
 const ClientTimeout = 120 * time.Second
 
+// Support repeating string flags
+type arrayFlags []string
+
+func (i *arrayFlags) String() string {
+	return strings.Join((*i)[:], ",")
+}
+
+func (i *arrayFlags) Set(value string) error {
+	*i = append(*i, value)
+	return nil
+}
+
 var (
 	debugFlag             = flag.Bool("debug", false, "enable debug log level")
-	horizonDomainFlag     = flag.String("address", "https://horizon-testnet.stellar.org", "horizon address")
 	stellarPassphraseFlag = flag.String("passphrase", "Test SDF Network ; September 2015", "stellar network passphrase")
+	horizonEndpointFlags  arrayFlags
 	logFileFlag           = flag.String("log", "loadtest.log", "log file path")
 	destinationFileFlag   = flag.String("dest", "dest.json", "destination keypairs input file")
 	accountsFileFlag      = flag.String("accounts", "accounts.json", "submitter keypairs input file")
@@ -40,6 +53,10 @@ var (
 	burstLimitFlag        = flag.Int("burst", 3, "burst rate limit")
 	nativeAssetFlag       = flag.Bool("native", true, "set to false to use a non-native asset")
 )
+
+func init() {
+	flag.Var(&horizonEndpointFlags, "", "Horizon address; Flag can be repeated multiple times for submitting to multiple Horizons")
+}
 
 // Run is the main function of this application. It returns a status exit code for main().
 func Run() int {
@@ -71,12 +88,15 @@ func Run() int {
 		return 1
 	}
 
-	client := horizon.Client{
-		URL:  *horizonDomainFlag,
-		HTTP: &http.Client{Timeout: ClientTimeout},
-	}
+	var clients []horizon.Client
+	for _, endpoint := range horizonEndpointFlags {
+		client := horizon.Client{
+			URL:  endpoint,
+			HTTP: &http.Client{Timeout: ClientTimeout},
+		}
 
-	LogBalances(&client, keypairs, logger)
+		clients = append(clients, client)
+	}
 
 	// Init rate limiter
 	limiter := rate.NewLimiter(rate.Limit(*txsPerSecondFlag), *burstLimitFlag)
@@ -93,10 +113,10 @@ func Run() int {
 
 	// Generate workers for submitting operations.
 	submitters := make([]*submitter.Submitter, *numSubmittersFlag)
-	sequenceProvider := sequence.New(&client, logger)
+	sequenceProvider := sequence.New(&clients[0], logger)
 	for i := 0; i < *numSubmittersFlag; i++ {
 		level.Debug(logger).Log("msg", "creating submitter", "submitter_index", i)
-		submitters[i], err = submitter.New(&client, network, sequenceProvider, keypairs[i].(*keypair.Full), destinations, *transactionAmountFlag, *opsPerTxFlag)
+		submitters[i], err = submitter.New(clients, network, sequenceProvider, keypairs[i].(*keypair.Full), destinations, *transactionAmountFlag, *opsPerTxFlag)
 		if err != nil {
 			level.Error(logger).Log("msg", err, "submitter_index", i)
 			return 1
@@ -137,8 +157,6 @@ func Run() int {
 	wg.Wait()
 
 	level.Info(logger).Log("execution_time", time.Since(startTime))
-
-	LogBalances(&client, keypairs, logger)
 
 	return 0
 }

@@ -1,0 +1,134 @@
+pipeline {
+    agent any
+    //parameters for the build
+    parameters {
+        //parameters for the environment creation
+
+
+
+        //parameters for the load test
+        string(name: 'TEST_NAME', defaultValue: '', description: 'Load Test name')
+        string(name: 'TEST_RUNNER', defaultValue: '', description: 'Load Test client \n(leave empty to use the IP generated in in the environment creation)')
+        string(name: 'VARS', defaultValue: '', description: 'variables for the load tests (appends to existing variables) \nExample: \n export FUNDER_SEED=xxx \n export CHANNEL_SEED=yyy')
+        string(name: 'BRANCH', defaultValue: 'multiple_horizons', description: 'stellar-load-testing version/branch')
+        string(name: 'SSH_KEY', defaultValue: '/var/jenkins_home/default-init-key.pem', description: 'SSH key to the environment')
+
+
+    }
+    stages {
+
+        stage('Create test environment') {
+            steps{
+
+                //set the test client IP
+                script {
+                    TEST_RUNNER=env.TEST_RUNNER
+                    if (!env.TEST_RUNNER){
+                       env.TEST_RUNNER=sh(script: "cat /tmp/test-client-ip-${SUF}", returnStdout: true).trim()
+                    }
+                }
+                //set the test name
+                //script {
+                //    TEST_NAME=env.TEST_NAME + "date '+%d-%m-%Y__%H-%M'"
+                //    echo $TEST_NAME
+                //    if (!env.TEST_NAME){
+                //       env.TEST_NAME=sh(script: "date '+%d-%m-%Y__%H-%M'", returnStdout: true).trim()
+                //    }
+                //}
+            }
+        }
+        stage ('Backup remote environment'){
+            steps {
+                // skip ssh key verification
+                // don't fail if folder doesn't exists
+                sh '''
+                    ssh -o "StrictHostKeyChecking=no" -i $SSH_KEY ubuntu@$TEST_RUNNER "mv ~/stellar-load-testing stellar-load-testing-`date +"%d-%m-%Y_%H-%M"` || true"
+                '''
+                }
+        }
+        stage ('Checkout code remotely'){
+            steps {
+                echo "Checking out stellar-load-testing  -> ${BRANCH} on test runner machine"
+                sh '''
+                    ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "git clone -b ${BRANCH} https://github.com/kinecosystem/stellar-load-testing.git"
+                '''
+            }
+        }
+        stage('Setup') {
+            parallel {
+                stage('Copy ssh key to test runner (for reports and logs)') {
+                    steps {
+                        echo "Copying keys"
+                        sh '''
+                            SSH_NAME=$(basename $SSH_KEY)
+                            rm -rf "${SSH_KEY%.*}2.pem" || true
+                            cp $SSH_KEY "${SSH_KEY%.*}2.pem"
+                            chmod 775 "${SSH_KEY%.*}2.pem"
+                            ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "rm -rf ~/.ssh/$SSH_NAME"
+                            scp -i $SSH_KEY "${SSH_KEY%.*}2.pem" ubuntu@$TEST_RUNNER:~/.ssh/$SSH_NAME
+                            ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "chmod 400 ~/.ssh/$SSH_NAME; echo 'export SSH_KEY=~/.ssh/$SSH_NAME'>>~/stellar-load-testing/vars.sh"
+                            rm -rf "${SSH_KEY%.*}2.pem"
+                        '''
+                    }
+                }
+                stage('Copy resources') {
+                    steps {
+                        sh '''
+                            ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "cp  ~/stellar-load-testing/resources/* ~/stellar-load-testing/"
+                        '''
+                    }
+                }
+                stage('Copy variables (if exist) to test runner') {
+                    steps {
+                        sh '''
+                            ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo 'TEST_NAME=${TEST_NAME}' >> ~/stellar-load-testing/vars.sh"
+                            [  -z "$VARS" ] && echo "Using project default vars.sh file" || ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo '${vars}' >> ~/stellar-load-testing/vars.sh"
+                            ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "chmod 775 ~/stellar-load-testing/vars.sh"
+                        '''
+                        withCredentials([string(credentialsId: 'ANALYTICS_DB', variable: 'ANALYTICS_DB_VAR')]) {
+                            sh '''
+                                ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo 'ANALYTICS_DB=${ANALYTICS_DB_VAR}' >> ~/stellar-load-testing/vars.sh"
+                            '''
+                        }
+                        withCredentials([string(credentialsId: 'ANALYTICS_DB_USER', variable: 'ANALYTICS_DB_USER_VAR')]) {
+                            sh '''
+                                ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo 'ANALYTICS_DB_USER=${ANALYTICS_DB_USER_VAR}' >> ~/stellar-load-testing/vars.sh"
+                            '''
+                        }
+                        withCredentials([string(credentialsId: 'ANALYTICS_PASS', variable: 'ANALYTICS_PASS_VAR')]) {
+                            sh '''
+                                ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "echo 'ANALYTICS_PASS=${ANALYTICS_PASS_VAR}' >> ~/stellar-load-testing/vars.sh"
+                             '''
+                        }
+                    }
+                }
+                //end of parallel setup
+            }
+        }
+        stage('Prepare accounts') {
+                steps {
+                    echo "preparing accounts"
+                    sh '''
+                        ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "cd ~/stellar-load-testing/cmd/python; ./prepare_accounts.sh "
+                    '''
+                }
+        }
+        stage ('Run tests'){
+                steps {
+                    echo 'Running load tests'
+                    sh '''
+                       ssh -i $SSH_KEY ubuntu@$TEST_RUNNER "cd ~/stellar-load-testing; ./scripts/perf.sh"
+                    '''
+                }
+        }
+        stage ('Collecting results'){
+                steps {
+                    echo 'Collecting results'
+                    sh '''
+
+                    '''
+                }
+        }
+
+    }
+}
