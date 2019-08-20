@@ -19,8 +19,8 @@ import (
 	"github.com/stellar/go/keypair"
 	"golang.org/x/time/rate"
 
-	"github.com/kinfoundation/stellar-load-testing/cmd/loadtest/sequence"
-	"github.com/kinfoundation/stellar-load-testing/cmd/loadtest/submitter"
+	"github.com/kinecosystem/blockchain-load-testing/cmd/loadtest/sequence"
+	"github.com/kinecosystem/blockchain-load-testing/cmd/loadtest/submitter"
 )
 
 // ClientTimeout is the Horizon HTTP request timeout.
