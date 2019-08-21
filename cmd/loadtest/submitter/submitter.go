@@ -184,7 +184,10 @@ func (s *Submitter) submit(logger log.Logger, destIndex int, native bool, client
 		return err
 	}
 
-	level.Info(logger).Log("msg", "submitting transaction")
+	level.Info(logger).Log(
+		"msg", "submitting transaction",
+		"tx_env_b64", txEnvB64,
+	)
 
 	start := time.Now()
 	_, err = s.clients[clientIndex].SubmitTransaction(txEnvB64)
