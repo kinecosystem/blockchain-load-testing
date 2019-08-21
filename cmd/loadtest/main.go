@@ -1,4 +1,4 @@
-// Load test the Stellar network.
+// Load test the Kin Blockchain.
 package main
 
 import (
