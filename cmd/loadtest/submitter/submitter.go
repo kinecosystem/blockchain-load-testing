@@ -27,6 +27,8 @@ type Submitter struct {
 	sourceSeed,
 	sourceAddress,
 
+	whitelistedAccountSeed,
+
 	transferAmount string
 
 	destinationAddresses []keypair.KP
@@ -49,6 +51,7 @@ func New(
 	source *keypair.Full,
 	destination []keypair.KP,
 	transferAmount string,
+	whitelistedAccountSeed string,
 	opsPerTx int) (*Submitter, error) {
 
 	s := Submitter{
@@ -163,6 +166,12 @@ func (s *Submitter) submit(logger log.Logger, destIndex int, native bool, client
 	logger = log.With(logger, "tx_hash", txHash)
 
 	txEnv, err := txBuilder.Sign(s.sourceSeed)
+
+	// Add whitelisted signature to transaction if given
+	if err != nil && len(s.whitelistedAccountSeed) > 0 {
+		err = txEnv.Mutate(build.Sign{Seed: s.whitelistedAccountSeed})
+	}
+
 	if err != nil {
 		level.Error(logger).Log("msg", err)
 		return err

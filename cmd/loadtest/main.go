@@ -39,19 +39,20 @@ func (i *arrayFlags) Set(value string) error {
 }
 
 var (
-	debugFlag             = flag.Bool("debug", false, "enable debug log level")
-	stellarPassphraseFlag = flag.String("passphrase", "Test SDF Network ; September 2015", "stellar network passphrase")
-	horizonEndpointFlags  arrayFlags
-	logFileFlag           = flag.String("log", "loadtest.log", "log file path")
-	destinationFileFlag   = flag.String("dest", "dest.json", "destination keypairs input file")
-	accountsFileFlag      = flag.String("accounts", "accounts.json", "submitter keypairs input file")
-	transactionAmountFlag = flag.String("txamount", "0.00001", "transaction amount")
-	opsPerTxFlag          = flag.Int("ops", 1, "amount of operations per transaction")
-	testTimeLengthFlag    = flag.Int("length", 60, "test length in seconds")
-	numSubmittersFlag     = flag.Int("submitters", 0, "amount of concurrent submitters; use 0 to use the number of accounts available")
-	txsPerSecondFlag      = flag.Float64("rate", 10, "transaction rate limit in seconds. use 0 disable rate limiting")
-	burstLimitFlag        = flag.Int("burst", 3, "burst rate limit")
-	nativeAssetFlag       = flag.Bool("native", true, "set to false to use a non-native asset")
+	debugFlag                  = flag.Bool("debug", false, "enable debug log level")
+	stellarPassphraseFlag      = flag.String("passphrase", "Test SDF Network ; September 2015", "stellar network passphrase")
+	horizonEndpointFlags       arrayFlags
+	logFileFlag                = flag.String("log", "loadtest.log", "log file path")
+	destinationFileFlag        = flag.String("dest", "dest.json", "destination keypairs input file")
+	accountsFileFlag           = flag.String("accounts", "accounts.json", "submitter keypairs input file")
+	transactionAmountFlag      = flag.String("txamount", "0.00001", "transaction amount")
+	opsPerTxFlag               = flag.Int("ops", 1, "amount of operations per transaction")
+	testTimeLengthFlag         = flag.Int("length", 60, "test length in seconds")
+	numSubmittersFlag          = flag.Int("submitters", 0, "amount of concurrent submitters; use 0 to use the number of accounts available")
+	txsPerSecondFlag           = flag.Float64("rate", 10, "transaction rate limit in seconds. use 0 disable rate limiting")
+	burstLimitFlag             = flag.Int("burst", 3, "burst rate limit")
+	nativeAssetFlag            = flag.Bool("native", true, "set to false to use a non-native asset")
+	whitelistedAccountSeedFlag = flag.String("whitelisted-account-seed", "", "whitelitsed account seed")
 )
 
 func init() {
@@ -116,7 +117,7 @@ func Run() int {
 	sequenceProvider := sequence.New(&clients[0], logger)
 	for i := 0; i < *numSubmittersFlag; i++ {
 		level.Debug(logger).Log("msg", "creating submitter", "submitter_index", i)
-		submitters[i], err = submitter.New(clients, network, sequenceProvider, keypairs[i].(*keypair.Full), destinations, *transactionAmountFlag, *opsPerTxFlag)
+		submitters[i], err = submitter.New(clients, network, sequenceProvider, keypairs[i].(*keypair.Full), destinations, *transactionAmountFlag, *whitelistedAccountSeedFlag, *opsPerTxFlag)
 		if err != nil {
 			level.Error(logger).Log("msg", err, "submitter_index", i)
 			return 1
