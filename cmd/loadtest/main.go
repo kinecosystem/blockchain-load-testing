@@ -40,7 +40,7 @@ func (i *arrayFlags) Set(value string) error {
 
 var (
 	debugFlag                  = flag.Bool("debug", false, "enable debug log level")
-	stellarPassphraseFlag      = flag.String("passphrase", "Test SDF Network ; September 2015", "stellar network passphrase")
+	networkPassphraseFlag      = flag.String("passphrase", "", "network passphrase")
 	horizonEndpointFlags       arrayFlags
 	logFileFlag                = flag.String("log", "loadtest.log", "log file path")
 	destinationFileFlag        = flag.String("dest", "dest.json", "destination keypairs input file")
@@ -106,7 +106,7 @@ func Run() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // Cancel the context if not done so already when test is complete.
 
-	network := build.Network{*stellarPassphraseFlag}
+	network := build.Network{*networkPassphraseFlag}
 
 	if *numSubmittersFlag <= 0 || *numSubmittersFlag > len(keypairs) {
 		*numSubmittersFlag = len(keypairs)
