@@ -54,4 +54,5 @@ DEST_ACCOUNT="${DEST_ACCOUNT:-dest.json}"
     -submitters $SUBMITTERS \
     -rate $RATE \
     -burst $BURST \
-    -dest $DEST_ACCOUNT
+    -dest $DEST_ACCOUNT \
+    -whitelisted-account-seed $WHITELISTED_SEED
