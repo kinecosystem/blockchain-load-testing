@@ -56,7 +56,7 @@ var (
 )
 
 func init() {
-	flag.Var(&horizonEndpointFlags, "", "Horizon address; Flag can be repeated multiple times for submitting to multiple Horizons")
+	flag.Var(&horizonEndpointFlags, "horizon", "Horizon address; Flag can be repeated multiple times for submitting to multiple Horizons")
 }
 
 // Run is the main function of this application. It returns a status exit code for main().
