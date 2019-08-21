@@ -49,7 +49,6 @@
   version = "v0.4.0"
 
 [[projects]]
-  branch = "master"
   digest = "1:0f5a0f46ef919ffcb9dbaf3f1347e357e6669a8691452843fd4a56ef3790ffb6"
   name = "github.com/kinecosystem/go"
   packages = [
@@ -74,6 +73,7 @@
   ]
   pruneopts = "UT"
   revision = "d32561b15436a50a33321a0e69cf288df39853fa"
+  version = "horizon-client-v0.0.1"
 
 [[projects]]
   branch = "master"

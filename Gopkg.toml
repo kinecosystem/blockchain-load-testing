@@ -3,7 +3,7 @@
   version = "0.9.0"
 
 [[constraint]]
-  branch = "master"
+  version = "horizon-client-v0.0.1"
   name = "github.com/kinecosystem/go"
 
 [[constraint]]
