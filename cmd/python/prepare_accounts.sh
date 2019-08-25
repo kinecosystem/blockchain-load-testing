@@ -61,6 +61,6 @@ pipenv run python create.py \
 # whitelist one address, used to whitelist txs in load test
 ../../resources/whitelist \
     -horizon $HORIZON \
-    -passphrase $PASS \
+    -passphrase "$PASS" \
     -whitelist-seed $WHITELIST_SEED \
     -address-to-whitelist $WHITELISTED_SEED
