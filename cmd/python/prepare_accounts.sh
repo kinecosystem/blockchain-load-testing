@@ -63,4 +63,4 @@ pipenv run python create.py \
     -horizon $HORIZON \
     -passphrase "$PASS" \
     -whitelist-seed $WHITELIST_SEED \
-    -address-to-whitelist $WHITELISTED_SEED
+    -address-to-whitelist $WHITELISTED_ADDRESS
