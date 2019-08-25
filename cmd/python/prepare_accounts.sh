@@ -33,11 +33,10 @@ for core in $(echo $CORE_SERVERS | tr -s " " "\n") ; do
 done
 
 # create whitelist account using funder seed if it doesn't exist yet
-if ! $(curl -sf $HORIZON/accounts/$WHITELIST_ADDRESS) ; then
+if ! $(curl -sSfo /dev/null $HORIZON/accounts/$WHITELIST_ADDRESS) ; then
     curl \
         -X POST \
-        -H 'multipart/form-data' \
-        -d 'tx=AAAAABTvssx9E+cge57y3TtzZCW5vuX/zhB3f5DRU7uNU6P6AAAAZAAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAJYQgQN++M4kAnwTTDZPyKCvoievyTVX1O7S/GKIRUdUAAAAAAABhqAAAAAAAAAAAA==' \
+        -F 'tx=AAAAABTvssx9E+cge57y3TtzZCW5vuX/zhB3f5DRU7uNU6P6AAAAZAAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAObhLzbJJxdOuI9TwWNbrYU5cwBw/eqixBs1aL9uqrNAAAAAAAABhqAAAAAAAAAAAY1To/oAAABAeQB2cdsRdtQEVwRHl+UN4D2W/Q5BkHmUNNFj4i39FivLwt+QLDYv+hWpBWlXmczhef654OeVw9hYQHrTtXT3Ag==' \
         "$HORIZON/transactions"
 fi
 
