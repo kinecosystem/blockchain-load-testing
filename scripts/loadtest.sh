@@ -38,13 +38,13 @@ DEST_ACCOUNT="${DEST_ACCOUNT:-dest.json}"
 ./loadtest \
     -native=$NATIVE \
     -debug=$DEBUG \
-    -address $HORIZON1 \
-    -address $HORIZON2 \
-    -address $HORIZON3 \
-    -address $HORIZON4 \
-    -address $HORIZON5 \
-    -address $HORIZON6 \
-    -address $HORIZON7 \
+    -horizon $HORIZON1 \
+    -horizon $HORIZON2 \
+    -horizon $HORIZON3 \
+    -horizon $HORIZON4 \
+    -horizon $HORIZON5 \
+    -horizon $HORIZON6 \
+    -horizon $HORIZON7 \
     -passphrase "$PASSPHRASE" \
     -log $LOG \
     -accounts $ACCOUNTS_FILE \
