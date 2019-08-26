@@ -15,7 +15,7 @@ import (
 	"github.com/kinecosystem/go/keypair"
 )
 
-const ClientTimeout = 5 * time.Second
+const ClientTimeout = 30 * time.Second
 
 // Support repeating string flags
 type arrayFlags []string
