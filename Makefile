@@ -1,7 +1,11 @@
 default: ;
 .DEFAULT_GOAL: default
 
-vendor:
+dep:
+	curl -Lo ./dep https://github.com/golang/dep/releases/download/v0.5.4/dep-linux-amd64
+	chmod +x ./dep
+
+vendor: dep
 	./dep ensure -v
 
 build:
