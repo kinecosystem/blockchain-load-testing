@@ -15,14 +15,8 @@ build: vendor
 	go build -o resources/whitelist cmd/whitelist/*.go
 .PHONY: build
 
-clean: clean-bin clean-vendor
+clean: clean-vendor
 .PHONY: clean
-
-clean-bin:
-	rm -f loadtest
-	rm -f create
-	rm -f merge
-.PHONY: clean-bin
 
 clean-vendor:
 	rm -rf vendor
