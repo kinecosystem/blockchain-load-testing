@@ -1,4 +1,4 @@
-// Load test the Stellar network.
+// Load test the Kin Blockchain.
 package main
 
 import (
@@ -14,13 +14,13 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/log/level"
-	"github.com/stellar/go/build"
-	"github.com/stellar/go/clients/horizon"
-	"github.com/stellar/go/keypair"
+	"github.com/kinecosystem/go/build"
+	"github.com/kinecosystem/go/clients/horizon"
+	"github.com/kinecosystem/go/keypair"
 	"golang.org/x/time/rate"
 
-	"github.com/kinfoundation/stellar-load-testing/cmd/loadtest/sequence"
-	"github.com/kinfoundation/stellar-load-testing/cmd/loadtest/submitter"
+	"github.com/kinecosystem/blockchain-load-testing/cmd/loadtest/sequence"
+	"github.com/kinecosystem/blockchain-load-testing/cmd/loadtest/submitter"
 )
 
 // ClientTimeout is the Horizon HTTP request timeout.
@@ -39,23 +39,24 @@ func (i *arrayFlags) Set(value string) error {
 }
 
 var (
-	debugFlag             = flag.Bool("debug", false, "enable debug log level")
-	stellarPassphraseFlag = flag.String("passphrase", "Test SDF Network ; September 2015", "stellar network passphrase")
-	horizonEndpointFlags  arrayFlags
-	logFileFlag           = flag.String("log", "loadtest.log", "log file path")
-	destinationFileFlag   = flag.String("dest", "dest.json", "destination keypairs input file")
-	accountsFileFlag      = flag.String("accounts", "accounts.json", "submitter keypairs input file")
-	transactionAmountFlag = flag.String("txamount", "0.00001", "transaction amount")
-	opsPerTxFlag          = flag.Int("ops", 1, "amount of operations per transaction")
-	testTimeLengthFlag    = flag.Int("length", 60, "test length in seconds")
-	numSubmittersFlag     = flag.Int("submitters", 0, "amount of concurrent submitters; use 0 to use the number of accounts available")
-	txsPerSecondFlag      = flag.Float64("rate", 10, "transaction rate limit in seconds. use 0 disable rate limiting")
-	burstLimitFlag        = flag.Int("burst", 3, "burst rate limit")
-	nativeAssetFlag       = flag.Bool("native", true, "set to false to use a non-native asset")
+	debugFlag                  = flag.Bool("debug", false, "enable debug log level")
+	networkPassphraseFlag      = flag.String("passphrase", "", "network passphrase")
+	horizonEndpointFlags       arrayFlags
+	logFileFlag                = flag.String("log", "loadtest.log", "log file path")
+	destinationFileFlag        = flag.String("dest", "dest.json", "destination keypairs input file")
+	accountsFileFlag           = flag.String("accounts", "accounts.json", "submitter keypairs input file")
+	transactionAmountFlag      = flag.String("txamount", "0.00001", "transaction amount")
+	opsPerTxFlag               = flag.Int("ops", 1, "amount of operations per transaction")
+	testTimeLengthFlag         = flag.Int("length", 60, "test length in seconds")
+	numSubmittersFlag          = flag.Int("submitters", 0, "amount of concurrent submitters; use 0 to use the number of accounts available")
+	txsPerSecondFlag           = flag.Float64("rate", 10, "transaction rate limit in seconds. use 0 disable rate limiting")
+	burstLimitFlag             = flag.Int("burst", 3, "burst rate limit")
+	nativeAssetFlag            = flag.Bool("native", true, "set to false to use a non-native asset")
+	whitelistedAccountSeedFlag = flag.String("whitelisted-account-seed", "", "whitelitsed account seed")
 )
 
 func init() {
-	flag.Var(&horizonEndpointFlags, "", "Horizon address; Flag can be repeated multiple times for submitting to multiple Horizons")
+	flag.Var(&horizonEndpointFlags, "horizon", "Horizon address; Flag can be repeated multiple times for submitting to multiple Horizons")
 }
 
 // Run is the main function of this application. It returns a status exit code for main().
@@ -105,7 +106,7 @@ func Run() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() // Cancel the context if not done so already when test is complete.
 
-	network := build.Network{*stellarPassphraseFlag}
+	network := build.Network{*networkPassphraseFlag}
 
 	if *numSubmittersFlag <= 0 || *numSubmittersFlag > len(keypairs) {
 		*numSubmittersFlag = len(keypairs)
@@ -116,7 +117,7 @@ func Run() int {
 	sequenceProvider := sequence.New(&clients[0], logger)
 	for i := 0; i < *numSubmittersFlag; i++ {
 		level.Debug(logger).Log("msg", "creating submitter", "submitter_index", i)
-		submitters[i], err = submitter.New(clients, network, sequenceProvider, keypairs[i].(*keypair.Full), destinations, *transactionAmountFlag, *opsPerTxFlag)
+		submitters[i], err = submitter.New(clients, network, sequenceProvider, keypairs[i].(*keypair.Full), destinations, *transactionAmountFlag, *whitelistedAccountSeedFlag, *opsPerTxFlag)
 		if err != nil {
 			level.Error(logger).Log("msg", err, "submitter_index", i)
 			return 1

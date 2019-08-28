@@ -8,13 +8,13 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"github.com/stellar/go/build"
-	"github.com/stellar/go/clients/horizon"
-	"github.com/stellar/go/keypair"
+	"github.com/kinecosystem/go/build"
+	"github.com/kinecosystem/go/clients/horizon"
+	"github.com/kinecosystem/go/keypair"
 	"golang.org/x/time/rate"
 
-	"github.com/kinfoundation/stellar-load-testing/cmd/loadtest/errors"
-	"github.com/kinfoundation/stellar-load-testing/cmd/loadtest/sequence"
+	"github.com/kinecosystem/blockchain-load-testing/cmd/loadtest/errors"
+	"github.com/kinecosystem/blockchain-load-testing/cmd/loadtest/sequence"
 )
 
 // Submitter continuously submits transactions to the Stellar network according to a rate limiter.
@@ -26,6 +26,8 @@ type Submitter struct {
 
 	sourceSeed,
 	sourceAddress,
+
+	whitelistedAccountSeed,
 
 	transferAmount string
 
@@ -49,14 +51,18 @@ func New(
 	source *keypair.Full,
 	destination []keypair.KP,
 	transferAmount string,
+	whitelistedAccountSeed string,
 	opsPerTx int) (*Submitter, error) {
 
 	s := Submitter{
 		clients: clients,
 		network: network,
 
-		sourceSeed:           source.Seed(),
-		sourceAddress:        source.Address(),
+		sourceSeed:    source.Seed(),
+		sourceAddress: source.Address(),
+
+		whitelistedAccountSeed: whitelistedAccountSeed,
+
 		destinationAddresses: destination,
 
 		transferAmount: transferAmount,
@@ -163,6 +169,12 @@ func (s *Submitter) submit(logger log.Logger, destIndex int, native bool, client
 	logger = log.With(logger, "tx_hash", txHash)
 
 	txEnv, err := txBuilder.Sign(s.sourceSeed)
+
+	// Add whitelisted signature to transaction if given
+	if err != nil && len(s.whitelistedAccountSeed) > 0 {
+		err = txEnv.Mutate(build.Sign{Seed: s.whitelistedAccountSeed})
+	}
+
 	if err != nil {
 		level.Error(logger).Log("msg", err)
 		return err
@@ -175,7 +187,10 @@ func (s *Submitter) submit(logger log.Logger, destIndex int, native bool, client
 		return err
 	}
 
-	level.Info(logger).Log("msg", "submitting transaction")
+	level.Info(logger).Log(
+		"msg", "submitting transaction",
+		"tx_env_b64", txEnvB64,
+	)
 
 	start := time.Now()
 	_, err = s.clients[clientIndex].SubmitTransaction(txEnvB64)

@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/stellar/go/clients/horizon"
+	"github.com/kinecosystem/go/clients/horizon"
 )
 
 var (

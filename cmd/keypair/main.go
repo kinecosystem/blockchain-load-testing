@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/go-kit/kit/log"
-	"github.com/stellar/go/keypair"
+	"github.com/kinecosystem/go/keypair"
 )
 
 func main() {

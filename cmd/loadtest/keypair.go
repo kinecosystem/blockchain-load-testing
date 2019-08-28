@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
-	"github.com/stellar/go/keypair"
+	"github.com/kinecosystem/go/keypair"
 )
 
 // KeypairJSON defines a single account structure for loading test account information.

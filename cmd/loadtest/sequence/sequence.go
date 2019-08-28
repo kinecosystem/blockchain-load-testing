@@ -8,9 +8,9 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"github.com/stellar/go/build"
-	"github.com/stellar/go/clients/horizon"
-	"github.com/stellar/go/xdr"
+	"github.com/kinecosystem/go/build"
+	"github.com/kinecosystem/go/clients/horizon"
+	"github.com/kinecosystem/go/xdr"
 )
 
 // Provider provides sequence numbers for Stellar transactions,

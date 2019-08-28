@@ -13,13 +13,10 @@ Go expects a specific folder formation: /LOCAL_PATH/work/go/src/github.com/kinec
 and environment variable:
 `export GOPATH=/LOCAL_PATH/work/go`
 
-Run from /LOCAL_PATH/work/go/src/github.com/kinfoundation/stellar-load-testing:
+Run from /LOCAL_PATH/work/go/src/github.com/kinecosystem/blockchain-load-testing:
 
 ```bash
-# download glide
-make glide
-
-# install dependencies
+# install dependencies, requires go dep
 make vendor
 
 # build binaries
