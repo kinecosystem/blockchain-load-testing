@@ -8,11 +8,11 @@ dep:
 vendor: dep
 	./dep ensure -v
 
-build:
-	go build -o loadtest cmd/loadtest/*.go
-	go build -o create cmd/create/*.go
-	go build -o merge cmd/merge/*.go
-	go build -o whitelist cmd/whitelist/*.go
+build: vendor
+	go build -o resources/loadtest cmd/loadtest/*.go
+	go build -o resources/create cmd/create/*.go
+	go build -o resources/merge cmd/merge/*.go
+	go build -o resources/whitelist cmd/whitelist/*.go
 .PHONY: build
 
 clean: clean-bin clean-vendor
