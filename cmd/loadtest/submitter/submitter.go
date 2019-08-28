@@ -58,8 +58,11 @@ func New(
 		clients: clients,
 		network: network,
 
-		sourceSeed:           source.Seed(),
-		sourceAddress:        source.Address(),
+		sourceSeed:    source.Seed(),
+		sourceAddress: source.Address(),
+
+		whitelistedAccountSeed: whitelistedAccountSeed,
+
 		destinationAddresses: destination,
 
 		transferAmount: transferAmount,
