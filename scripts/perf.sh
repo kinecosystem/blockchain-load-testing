@@ -20,8 +20,6 @@ then
 else
       export REPETITIONS=$2
 fi
-
-TEST_NAME=$TEST_NAME"_"`date '+%d_%m_%Y__%H_%M'`
 echo "test name: $TEST_NAME"
 
 for (( i=1; i<=$REPETITIONS; i++ )); do

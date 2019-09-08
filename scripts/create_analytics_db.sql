@@ -58,8 +58,7 @@ CREATE TABLE public.ledger_db_end (
 CREATE TABLE public.ledger_db_start (
     node character varying(5),
     "timestamp" timestamp without time zone,
-    sequence integer,
-    testname character varying(32)
+    sequence integer
 );
 
 
@@ -109,12 +108,14 @@ CREATE VIEW public.core_timings AS
     date_part('epoch'::text, (db_e."timestamp" - db_s."timestamp")) AS db_duration,
     v_s."timestamp" AS v_start,
     v_e."timestamp" AS v_end,
-    date_part('epoch'::text, (v_e."timestamp" - v_s."timestamp")) AS v_duration
+    date_part('epoch'::text, (v_e."timestamp" - v_s."timestamp")) AS v_duration,
+    ts_md."test_name" AS test_name
    FROM public.ledger_db_start db_s,
     public.ledger_db_end db_e,
     public.ledger_vote_start v_s,
     public.ledger_vote_end v_e,
-    public.ledger_tx_count tx_c
+    public.ledger_tx_count tx_c,
+    public.test_meta_data ts_md
   WHERE ((db_s.sequence = db_e.sequence) AND (db_s.sequence = v_s.sequence) AND (db_s.sequence = v_e.sequence) AND (db_s.sequence = tx_c.sequence) AND ((db_s.node)::text = (db_e.node)::text) AND ((db_s.node)::text = (v_s.node)::text) AND ((db_s.node)::text = (v_e.node)::text) AND ((db_s.node)::text = (tx_c.node)::text));
 
 
