@@ -21,13 +21,13 @@ else
       export REPETITIONS=$2
 fi
 echo "test name: $TEST_NAME"
-
+TEST_SUB_NAME=$TEST_NAME"_"$SUB_TEST
 for (( i=1; i<=$REPETITIONS; i++ )); do
 #todo: branch name
 cat <<EOF > /tmp/test-params
 insert into test_meta_data values(
 now(),
-'$TEST_NAME',
+'$TEST_SUB_NAME',
 'ops/tx: $OPS_PER_TX
 duration: $TIME_LENGTH
 rate: $RATE
