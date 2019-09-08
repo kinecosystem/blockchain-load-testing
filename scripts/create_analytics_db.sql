@@ -58,7 +58,8 @@ CREATE TABLE public.ledger_db_end (
 CREATE TABLE public.ledger_db_start (
     node character varying(5),
     "timestamp" timestamp without time zone,
-    sequence integer
+    sequence integer,
+    testname character varying(32)
 );
 
 
