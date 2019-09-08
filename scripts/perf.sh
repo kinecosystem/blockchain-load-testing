@@ -21,7 +21,7 @@ else
       export REPETITIONS=$2
 fi
 echo "test name: $TEST_NAME"
-TEST_SUB_NAME=$TEST_NAME"_"$SUB_TEST
+TEST_SUB_NAME=$TEST_NAME"_"$TEST_SUB
 for (( i=1; i<=$REPETITIONS; i++ )); do
 #todo: branch name
 cat <<EOF > /tmp/test-params
