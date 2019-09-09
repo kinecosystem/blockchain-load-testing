@@ -156,7 +156,8 @@ CREATE VIEW public.last_submission AS
 
 CREATE TABLE public.tx_ledger (
     hash character varying(64) NOT NULL,
-    sequence integer NOT NULL
+    sequence integer NOT NULL,
+    testid character varying(32) NOT NULL
 );
 
 
