@@ -48,7 +48,7 @@ echo -n "Finished at: `date`"
 echo
 echo "Gathering logs."
 
-./scripts/perf-logs.sh $L1 $L2
+./scripts/perf-logs.sh $L1 $L2 $TEST_SUB_NAME
 
 mv loadtest.log /tmp/loadtest-$L1-$L2.log
 

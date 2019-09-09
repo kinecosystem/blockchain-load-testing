@@ -18,6 +18,8 @@ echo "getting data from $HORIZON_DOMAIN"
 ssh  -o "StrictHostKeyChecking=no"  -i $SSH_KEY ubuntu@$HORIZON_DOMAIN  "sudo docker exec data_horizon-db_1 psql -h localhost -U stellar horizon -c 'select transaction_hash, ledger_sequence from history_transactions'" 1> /tmp/perf-tx-ledgers.txt
 ssh -i $SSH_KEY ubuntu@$HORIZON_DOMAIN  "sudo su -c 'docker logs horizon   2> /tmp/a'; grep \"Finished ingesting ledgers\" /tmp/a "  | tail -300 > /tmp/perf-horizon-ingest.log
 
+#Add Test SubName to tx-ledger table
+sed -e "s/$/| ${3}/" -i /tmp/perf-tx-ledgers.txt
 
 #Backup Prometheus data folder
 echo "Backup Prometheus data folder"
