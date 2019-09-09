@@ -172,7 +172,7 @@ CREATE VIEW public.tx_detail AS
     s.ts AS submission_time,
     i."timestamp" AS ingestion_time,
     date_part('epoch'::text, (i."timestamp" - s.ts)) AS duration,
-    ts_md."test_name" AS test_name
+    t.testid
    FROM public.tx_ledger t,
     public.last_submission s,
     public.ingestion i,
