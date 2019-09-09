@@ -135,7 +135,8 @@ CREATE TABLE public.ingestion (
 
 CREATE TABLE public.submission (
     hash character varying(64) NOT NULL,
-    "timestamp" timestamp(6) without time zone NOT NULL
+    "timestamp" timestamp(6) without time zone NOT NULL,
+    testid character varying(32) NOT NULL
 );
 
 

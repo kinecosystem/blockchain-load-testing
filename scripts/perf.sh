@@ -78,7 +78,7 @@ cat perf-horizon-ingest.log | . $SCRIPT_DIR/ingestion.sh > ingestion.sql
 psql --username=$ANALYTICS_DB_USER  --host=$ANALYTICS_DB --dbname=$TEST_NAME < ingestion.sql
 
 
-grep "submitting" loadtest-$L1-$L2.log | jq -rc ".tx_hash, .timestamp" | awk -f $SCRIPT_DIR/submission.awk | paste -sd ",\n" | while read -r line; do echo "insert into submission values($line);"; done > submission.sql
+grep "submitting" loadtest-$L1-$L2.log | jq -rc ".tx_hash, .timestamp" | awk -f $SCRIPT_DIR/submission.awk | paste -sd ",\n" | while read -r line; do echo "insert into submission values($line,'"$TEST_SUB_NAME"');"; done > submission.sql
 #cat submission.sql bmission.sql | ssh -i $SSH_KEY ubuntu@$HORIZON_DOMAIN 'sudo docker exec data_horizon-db_1 psql -h localhost -U stellar analytics' > /dev/null 2>&1
 psql --username=$ANALYTICS_DB_USER  --host=$ANALYTICS_DB --dbname=$TEST_NAME < submission.sql
 
