@@ -2,9 +2,9 @@
 #IMPORTANNT: FUNDER_SEED and CHANNEL_SEED will be overridden if activated from Jenkins
 
 #needs to be lower than AMOUNT_OF_SOURCE_ACCOUNTS
-export RATE=80
+export RATE=100
 export REPETITIONS=1
-export TIME_LENGTH=600
+export TIME_LENGTH=300
 
 #max amount of simultaneous tx
 export AMOUNT_OF_SOURCE_ACCOUNTS=1000
@@ -13,9 +13,9 @@ export GOPATH=~/go
 export AMOUNT_OF_DESTINATION_ACCOUNTS=20
 export DEST_ACCOUNT=dest.json
 
-export OPS_PER_TX=1
+export OPS_PER_TX=10
 #less than or equal to the AMOUNT_OF_SOURCE_ACCOUNTS
-export SUBMITTERS=100
+export SUBMITTERS=500
 
 export SCRIPT_DIR=~/stellar-load-testing/scripts
 
