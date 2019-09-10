@@ -144,6 +144,7 @@ CREATE TABLE public.submission (
 
 CREATE VIEW public.last_submission AS
  SELECT submission.hash,
+        submission.testid,
     max(submission."timestamp") AS ts
    FROM public.submission
   GROUP BY submission.hash;
