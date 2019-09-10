@@ -144,9 +144,10 @@ CREATE TABLE public.submission (
 
 CREATE VIEW public.last_submission AS
  SELECT submission.hash,
-    max(submission."timestamp") AS ts
+    max(submission."timestamp") AS ts,
+    public.submission.test.id
    FROM public.submission
-  GROUP BY submission.hash;
+  GROUP BY submission.hash, submission.testid;
 
 
 --
@@ -169,11 +170,12 @@ CREATE VIEW public.tx_detail AS
     t.sequence,
     s.ts AS submission_time,
     i."timestamp" AS ingestion_time,
-    date_part('epoch'::text, (i."timestamp" - s.ts)) AS duration
+    date_part('epoch'::text, (i."timestamp" - s.ts)) AS duration,
+    t.testid
    FROM public.tx_ledger t,
     public.last_submission s,
     public.ingestion i
-  WHERE ((t.sequence = i.ledger) AND ((t.hash)::text = (s.hash)::text));
+  WHERE ((t.sequence = i.ledger) AND ((t.hash)::text = (s.hash)::text) AND (t.testid = s.testid));
 
 
 --
