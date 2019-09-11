@@ -144,8 +144,8 @@ CREATE TABLE public.submission (
 
 CREATE VIEW public.last_submission AS
  SELECT submission.hash,
-    max(submission."timestamp") AS ts,
-    public.submission.test.id
+        submission.testid,
+    max(submission."timestamp") AS ts
    FROM public.submission
   GROUP BY submission.hash, submission.testid;
 
@@ -174,9 +174,9 @@ CREATE VIEW public.tx_detail AS
     t.testid
    FROM public.tx_ledger t,
     public.last_submission s,
-    public.ingestion i
+    public.ingestion i,
+    public.test_meta_data ts_md
   WHERE ((t.sequence = i.ledger) AND ((t.hash)::text = (s.hash)::text) AND (t.testid = s.testid));
-
 
 --
 -- Name: ingestion ingestion_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -234,4 +234,3 @@ GRANT ALL ON SCHEMA public TO PUBLIC;
 --
 -- PostgreSQL database dump complete
 --
-
